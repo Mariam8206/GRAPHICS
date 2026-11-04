@@ -5,7 +5,7 @@ $ErrorActionPreference = "Stop"
 $here = Split-Path $MyInvocation.MyCommand.Path
 Add-Type -AssemblyName PresentationCore, PresentationFramework, WindowsBase
 $sizes = @{ xs = 11; s = 13; m = 15; n = 18; l = 22; xl = 30; xxl = 58; btn = 30 }   # em size in pixels
-# Image height per class, the same as the earlier Arabic images (FALLBACK_HEIGHT in text_labels.cpp), so the layout is unchanged
+# Image height per class (CLASS_HEIGHT in text_labels.cpp). Every image of a class is padded to it, so labels and digits line up
 $heights = @{ xs = 14; s = 17; m = 22; n = 23; l = 33; xl = 32; xxl = 83; btn = 43 }
 $face = New-Object System.Windows.Media.Typeface (New-Object System.Windows.Media.FontFamily "Dubai"), ([System.Windows.FontStyles]::Normal), ([System.Windows.FontWeights]::Bold), ([System.Windows.FontStretches]::Normal)
 

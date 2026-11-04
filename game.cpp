@@ -83,14 +83,13 @@ static std::vector<HitEffect> effects;
 static std::vector<CoinPickup> coinPickups;
 static std::vector<FloatingText> floatingTexts;
 
-// Economy and placement (values in config.h). Unlocks are stored on their own, NOT computed from the
-// balance, so spending coins can never lock a card again.
+// Economy and placement (values in config.h). A card is unlocked exactly while the balance is at least its
+// unlock threshold (PDF): it locks again as soon as a purchase takes the balance below it.
 static const int PRICE[PLAYER_TYPE_COUNT] = { MELEE_PRICE, RANGED_PRICE, DEFENSE_PRICE };
 static const int UNLOCK_AT[PLAYER_TYPE_COUNT] = { MELEE_UNLOCK_AT, RANGED_UNLOCK_AT, DEFENSE_UNLOCK_AT };
 static const int FIELD_LIMIT[PLAYER_TYPE_COUNT] = { MELEE_FIELD_LIMIT, RANGED_FIELD_LIMIT, DEFENSE_FIELD_LIMIT };
 static const char* PLAYER_NAME[PLAYER_TYPE_COUNT] = { "ANAB MAN", "BERAM", "TAYSEER" };
 static int coins = STARTING_COINS;
-static bool unlocked[PLAYER_TYPE_COUNT];
 static float cooldownLeft[PLAYER_TYPE_COUNT];
 static int selectedCard = -1;
 
@@ -133,12 +132,13 @@ static void showMessage(const std::string& text, const TextLine& line, float r, 
     messageR = r; messageG = g; messageB = b;
 }
 
-// Every coin that comes in goes through here, so the unlock check can never be missed.
+// Every coin that comes in goes through here. When the balance climbs to a card's threshold, that card
+// unlocks (see isUnlocked) and its "... unlocked!" message is shown - again after every relock.
 static void addCoins(int amount) {
+    int before = coins;
     coins += amount;
     for (int t = 0; t < PLAYER_TYPE_COUNT; t++)
-        if (!unlocked[t] && coins >= UNLOCK_AT[t]) {
-            unlocked[t] = true;                                       // permanent until restart
+        if (before < UNLOCK_AT[t] && coins >= UNLOCK_AT[t]) {
             static const char* UNLOCKED_ID[PLAYER_TYPE_COUNT] = { "msg_unlocked_melee", "msg_unlocked_ranged", "msg_unlocked_defense" };
             showMessage(std::string(PLAYER_NAME[t]) + " UNLOCKED!", TextLine(TC_L).label(UNLOCKED_ID[t]), 0.4f, 1.0f, 0.5f);
         }
@@ -253,11 +253,8 @@ void resetGame() {
     gameWon = false;
     gameLost = false;
     waveBreakTimer = -1;
-    coins = STARTING_COINS;
-    for (int t = 0; t < PLAYER_TYPE_COUNT; t++) {
-        unlocked[t] = (coins >= UNLOCK_AT[t]);   // only Anab Man (threshold 0) at the start
-        cooldownLeft[t] = 0;
-    }
+    coins = STARTING_COINS;                       // 30: only Anab Man (threshold 0) is unlocked at the start
+    for (int t = 0; t < PLAYER_TYPE_COUNT; t++) cooldownLeft[t] = 0;
     selectedCard = -1;
     messageTimer = 0;
     for (int lane = 0; lane < LANE_COUNT; lane++) laneSelected[lane] = false;
@@ -268,7 +265,7 @@ void resetGame() {
 // The checks, in order. Nothing is changed here.
 static PlaceResult checkPlacement(PlayerType type, int lane) {
     if (gameWon || gameLost) return PLACE_GAME_OVER;
-    if (!unlocked[type]) return PLACE_LOCKED;
+    if (!isUnlocked(type)) return PLACE_LOCKED;
     if (coins < PRICE[type]) return PLACE_NO_COINS;
     if (cooldownLeft[type] > 0) return PLACE_COOLDOWN;
     if (countOnField(type) >= FIELD_LIMIT[type]) return PLACE_LIMIT;
@@ -297,7 +294,7 @@ void clickCard(PlayerType type) {
     // A locked, unaffordable or full card cannot be selected. A card that is only cooling down can:
     // the placement itself then waits for the cooldown.
     PlaceResult problem = PLACE_OK;
-    if (!unlocked[type]) problem = PLACE_LOCKED;
+    if (!isUnlocked(type)) problem = PLACE_LOCKED;
     else if (coins < PRICE[type]) problem = PLACE_NO_COINS;
     else if (countOnField(type) >= FIELD_LIMIT[type]) problem = PLACE_LIMIT;
     if (problem != PLACE_OK) { showRefusal(type, problem); return; }
@@ -366,7 +363,7 @@ int getCoins() { return coins; }
 int getPrice(PlayerType type) { return PRICE[type]; }
 int getUnlockThreshold(PlayerType type) { return UNLOCK_AT[type]; }
 int getFieldLimit(PlayerType type) { return FIELD_LIMIT[type]; }
-bool isUnlocked(PlayerType type) { return unlocked[type]; }
+bool isUnlocked(PlayerType type) { return coins >= UNLOCK_AT[type]; }   // relocks below the threshold (PDF)
 float getCooldownLeft(PlayerType type) { return cooldownLeft[type] > 0 ? cooldownLeft[type] : 0.0f; }
 
 int countOnField(PlayerType type) {

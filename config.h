@@ -22,14 +22,14 @@ const float CARD_HEIGHT = 96.0f;
 
 const int TOTAL_WAVES = 3;
 
-// ===================== PROVISIONAL economy (team decisions, waiting for TA confirmation) =====================
+// ===================== Economy (team values, waiting for TA confirmation) =====================
 const int STARTING_COINS = 30;
 // Buying price: paid for EVERY successful placement.
 const int MELEE_PRICE = 10;
 const int RANGED_PRICE = 40;
 const int DEFENSE_PRICE = 60;
-// Unlocking threshold: the card unlocks FOR GOOD the first time the balance reaches it (0 = unlocked from the start).
-// Unlocking is separate from buying: spending coins afterwards never locks the card again.
+// Unlocking threshold (PDF): a card is unlocked while the balance is at least this value and locks again as soon
+// as the balance falls below it (0 = always unlocked). Unlocking does not cost anything; buying costs the price.
 const int MELEE_UNLOCK_AT = 0;
 const int RANGED_UNLOCK_AT = 100;
 const int DEFENSE_UNLOCK_AT = 150;
@@ -45,7 +45,7 @@ const int MEDIUM_REWARD = 20;
 const int HARD_REWARD = 30;
 const float COIN_PICKUP_RADIUS = 22.0f;  // the mouse collects a coin within this many pixels
 const float COIN_RADIUS = 11.0f;         // drawn size of a dropped coin; a player character touching it collects it
-const float MESSAGE_TIME = 1.5f;         // how long a placement message ("NOT ENOUGH COINS") stays
+const float MESSAGE_TIME = 1.5f;         // how long a placement message ("Not enough coins") stays
 
 // ===================== Values FIXED by the PDF (do not change) =====================
 const int MELEE_HEALTH = 5;        // "5 lives"
@@ -58,7 +58,7 @@ const int PLAYER_DAMAGE = 1;       // melee and ranged players: 1 point per atta
 const int ENEMY_DAMAGE = 1;        // easy and medium enemies
 const int HARD_ENEMY_DAMAGE = 2;   // hard melee enemy
 
-// ===================== PROVISIONAL tuning (team table; tune by playing) =====================
+// ===================== Tuning (team table; adjust by playing) =====================
 // Team values are in "screen widths per second"; multiplied by SCREEN_WIDTH to get pixels per second.
 const float EASY_SPEED = 0.10f * SCREEN_WIDTH;
 const float MEDIUM_SPEED = 0.10f * SCREEN_WIDTH;
@@ -67,7 +67,7 @@ const float ENEMY_ATTACK_INTERVAL = 2.0f;                // seconds between enem
 const float PROJECTILE_SPEED = 0.50f * SCREEN_WIDTH;
 const float JUMP_DURATION = 0.5f;
 const float DUCK_DURATION = 0.5f;
-// Not in the team table, chosen by the coding agent (provisional):
+// Not in the team table; chosen during development (adjust by playing):
 const float PLAYER_SPEED = 0.05f * SCREEN_WIDTH;         // walking speed of melee and ranged players
 const float MELEE_ATTACK_INTERVAL = 1.0f;
 const float RANGED_ATTACK_INTERVAL = 1.5f;

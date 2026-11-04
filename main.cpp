@@ -68,7 +68,7 @@ int main() {
     glfwSetKeyCallback(window, keyCallback);
 
     srand((unsigned)time(nullptr));   // once per launch: enemy lanes and order differ between games
-    resetGame();   // also sets the starting coins (PROVISIONAL, see config.h)
+    resetGame();   // also sets the starting coins (see config.h)
     App app;       // starts on the main menu (PDF 4.3)
 
     double lastTime = glfwGetTime();
