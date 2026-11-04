@@ -4,21 +4,30 @@
 #include <cmath>
 
 // ===================== PLAYER 1: El-Ragol El-Enab (melee) =====================
+// Animation: legs walk, the back arm swings against the legs, the front arm swings the club.
+static CharacterPose anabManPose(float walkTime, bool moving, float attack) {
+    CharacterPose pose;
+    pose.legSwing = legSwing(walkTime, moving);
+    pose.backArmAngle = -pose.legSwing * 0.6f;
+    pose.frontArmAngle = swingAngle(attack, walkTime);
+    return pose;
+}
+
 void drawAnabMan(float walkTime, bool moving, float attack) {
     float suitR = 0.45f, suitG = 0.13f, suitB = 0.25f;     // maroon/purple costume
     float darkR = 0.30f, darkG = 0.08f, darkB = 0.16f;
-    float swing = legSwing(walkTime, moving);
+    CharacterPose pose = anabManPose(walkTime, moving, attack);
 
     // back arm (darker, behind the body)
     pushMatrix();
-    translate(-3, 52);
-    rotate(-swing * 0.6f);
+    translate(BACK_SHOULDER_X, SHOULDER_Y);
+    rotate(pose.backArmAngle);
     drawRectangle(-3, -20, 6, 20, darkR, darkG, darkB);
     drawCircle(0, -21, 3.5f, 0.1f, 0.1f, 0.1f);                        // black glove
     popMatrix();
 
-    drawLeg(-4, 30, swing, 26, darkR, darkG, darkB, 0.12f, 0.12f, 0.12f);
-    drawLeg(4, 30, -swing, 26, suitR, suitG, suitB, 0.12f, 0.12f, 0.12f);
+    drawLeg(BACK_HIP_X, HIP_Y, pose.legSwing, 26, darkR, darkG, darkB, 0.12f, 0.12f, 0.12f);
+    drawLeg(FRONT_HIP_X, HIP_Y, -pose.legSwing, 26, suitR, suitG, suitB, 0.12f, 0.12f, 0.12f);
 
     // torso with silver side stripes and belt
     drawQuad(-11, 29, 11, 29, 13, 55, -13, 55, suitR, suitG, suitB);
@@ -47,8 +56,8 @@ void drawAnabMan(float walkTime, bool moving, float attack) {
 
     // front arm swinging a wooden club (the close-range weapon animates in the hand)
     pushMatrix();
-    translate(3, 52);
-    rotate(swingAngle(attack, walkTime));
+    translate(FRONT_SHOULDER_X, SHOULDER_Y);
+    rotate(pose.frontArmAngle);
     drawRectangle(-3, -20, 6, 20, suitR, suitG, suitB);
     drawCircle(0, -21, 3.8f, 0.1f, 0.1f, 0.1f);                        // glove
     drawQuad(-2, -19, -2, -23, 28, -26, 28, -16, 0.55f, 0.35f, 0.18f); // club: thin handle, thick end
