@@ -6,7 +6,7 @@
 // ===================== PLAYER 1: El-Ragol El-Enab (melee) =====================
 // Animation: legs walk, the back arm swings against the legs, the front arm swings the club.
 static CharacterPose anabManPose(float walkTime, bool moving, float attack) {
-    CharacterPose pose;
+    CharacterPose pose = {};
     pose.legSwing = legSwing(walkTime, moving);
     pose.backArmAngle = -pose.legSwing * 0.6f;
     pose.frontArmAngle = swingAngle(attack, walkTime);

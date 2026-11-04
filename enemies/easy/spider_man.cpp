@@ -4,20 +4,30 @@
 #include <cmath>
 
 // ===================== ENEMY 1: Spider-Man (easy, attacks from above) =====================
+// Animation: legs walk, the back arm swings against the legs. The front arm points up and forward to shoot webs:
+// it starts at 140 degrees and comes down to 120 during a throw; between throws it rests at 70.
+static CharacterPose spiderManPose(float walkTime, bool moving, float attack) {
+    CharacterPose pose = {};
+    pose.legSwing = legSwing(walkTime, moving);
+    pose.backArmAngle = -pose.legSwing * 0.6f;
+    pose.frontArmAngle = (attack >= 0) ? 120.0f + 20.0f * (1 - attack) : 70.0f;
+    return pose;
+}
+
 void drawSpiderMan(float walkTime, bool moving, float attack) {
     float redR = 0.85f, redG = 0.10f, redB = 0.12f;
     float blueR = 0.12f, blueG = 0.25f, blueB = 0.75f;
-    float swing = legSwing(walkTime, moving);
+    CharacterPose pose = spiderManPose(walkTime, moving, attack);
 
     pushMatrix();                                                           // back arm
-    translate(-3, 52);
-    rotate(-swing * 0.6f);
+    translate(BACK_SHOULDER_X, SHOULDER_Y);
+    rotate(pose.backArmAngle);
     drawRectangle(-3, -20, 6, 20, blueR * 0.8f, blueG * 0.8f, blueB * 0.8f);
     drawCircle(0, -21, 3.3f, redR * 0.8f, redG, redB);
     popMatrix();
 
-    drawLeg(-4, 30, swing, 26, blueR * 0.8f, blueG * 0.8f, blueB * 0.8f, redR * 0.8f, redG, redB);  // blue legs, red boots
-    drawLeg(4, 30, -swing, 26, blueR, blueG, blueB, redR, redG, redB);
+    drawLeg(BACK_HIP_X, HIP_Y, pose.legSwing, 26, blueR * 0.8f, blueG * 0.8f, blueB * 0.8f, redR * 0.8f, redG, redB);  // blue legs, red boots
+    drawLeg(FRONT_HIP_X, HIP_Y, -pose.legSwing, 26, blueR, blueG, blueB, redR, redG, redB);
 
     drawQuad(-10, 29, 10, 29, 12, 55, -12, 55, blueR, blueG, blueB);       // blue sides
     drawQuad(-6, 29, 6, 29, 9, 55, -9, 55, redR, redG, redB);              // red front
@@ -42,10 +52,9 @@ void drawSpiderMan(float walkTime, bool moving, float attack) {
     popMatrix();
 
     // front arm: points up and forward to shoot webs from above
-    float armAngle = (attack >= 0) ? 120.0f + 20.0f * (1 - attack) : 70.0f;
     pushMatrix();
-    translate(3, 52);
-    rotate(armAngle);
+    translate(FRONT_SHOULDER_X, SHOULDER_Y);
+    rotate(pose.frontArmAngle);
     drawRectangle(-3, -20, 6, 20, redR, redG, redB);
     drawCircle(0, -21, 3.5f, redR, redG, redB);
     drawLine(-1, -23, -1, -28, 1.5f, redR, redG, redB);                     // fingers in the web-shooting pose

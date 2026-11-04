@@ -4,24 +4,34 @@
 #include <cmath>
 
 // ===================== PLAYER 2: Beram (ranged scientist) =====================
+// Animation: legs walk, the back arm swings against the legs, the front arm holds the gun forward (80 degrees)
+// and kicks up a little more (up to 15 degrees) right after firing.
+static CharacterPose beramPose(float walkTime, bool moving, float attack) {
+    CharacterPose pose = {};
+    pose.legSwing = legSwing(walkTime, moving);
+    pose.backArmAngle = -pose.legSwing * 0.6f;
+    pose.recoil = (attack > 0) ? attack : 0;               // 1 right after firing, fades to 0
+    pose.frontArmAngle = 80 + pose.recoil * 15;
+    return pose;
+}
+
 void drawBeram(float walkTime, bool moving, float attack) {
     float hairR = 0.15f, hairG = 0.10f, hairB = 0.07f;
     float shirtR = 0.25f, shirtG = 0.60f, shirtB = 0.30f;   // green T-shirt
     float vestR = 0.42f, vestG = 0.42f, vestB = 0.45f;      // gray vest
-    float swing = legSwing(walkTime, moving);
-    float recoil = (attack > 0) ? attack : 0;               // 1 right after firing, fades to 0
+    CharacterPose pose = beramPose(walkTime, moving, attack);
 
     drawEllipse(-4, 56, 8, 10, hairR, hairG, hairB);       // long hair falling behind the shoulders
 
     pushMatrix();                                           // back arm
-    translate(-3, 52);
-    rotate(-swing * 0.6f);
+    translate(BACK_SHOULDER_X, SHOULDER_Y);
+    rotate(pose.backArmAngle);
     drawRectangle(-3, -8, 6, 8, shirtR * 0.8f, shirtG * 0.8f, shirtB * 0.8f);
     drawRectangle(-2.5f, -19, 5, 11, SKIN[0] * 0.85f, SKIN[1] * 0.85f, SKIN[2] * 0.85f);
     popMatrix();
 
-    drawLeg(-4, 30, swing, 26, 0.15f, 0.20f, 0.35f, 0.35f, 0.22f, 0.12f);   // dark jeans, brown shoes
-    drawLeg(4, 30, -swing, 26, 0.20f, 0.26f, 0.42f, 0.35f, 0.22f, 0.12f);
+    drawLeg(BACK_HIP_X, HIP_Y, pose.legSwing, 26, 0.15f, 0.20f, 0.35f, 0.35f, 0.22f, 0.12f);   // dark jeans, brown shoes
+    drawLeg(FRONT_HIP_X, HIP_Y, -pose.legSwing, 26, 0.20f, 0.26f, 0.42f, 0.35f, 0.22f, 0.12f);
 
     drawQuad(-11, 29, 11, 29, 12, 55, -12, 55, shirtR, shirtG, shirtB);    // T-shirt
     drawQuad(-12, 30, -3, 30, -4, 54, -12, 54, vestR, vestG, vestB);       // vest, back panel
@@ -41,8 +51,8 @@ void drawBeram(float walkTime, bool moving, float attack) {
 
     // front arm holding the El-Anab gun forward; it kicks back when firing
     pushMatrix();
-    translate(3, 52);
-    rotate(80 + recoil * 15);
+    translate(FRONT_SHOULDER_X, SHOULDER_Y);
+    rotate(pose.frontArmAngle);
     drawRectangle(-3, -8, 6, 8, shirtR, shirtG, shirtB);                    // sleeve
     drawRectangle(-2.5f, -19, 5, 11, SKIN[0], SKIN[1], SKIN[2]);
     translate(0, -21);
@@ -52,7 +62,7 @@ void drawBeram(float walkTime, bool moving, float attack) {
     drawRectangle(0, -9, 4, 7, 0.30f, 0.30f, 0.33f);                        // grip
     drawCircle(7, 8, 4.5f, 0.85f, 0.92f, 0.95f);                            // glass flask on top
     drawCircle(7, 7, 3.2f, 0.55f, 0.05f, 0.25f);                            // El-Anab liquid
-    if (recoil > 0.5f) drawCircle(24, 0.5f, 5 * recoil, 0.85f, 0.15f, 0.45f, 0.8f);   // muzzle flash
+    if (pose.recoil > 0.5f) drawCircle(24, 0.5f, 5 * pose.recoil, 0.85f, 0.15f, 0.45f, 0.8f);   // muzzle flash
     popMatrix();
 }
 

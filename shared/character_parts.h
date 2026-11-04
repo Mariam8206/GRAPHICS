@@ -20,6 +20,10 @@ struct CharacterPose {
     float legSwing;        // back leg turns by +legSwing, front leg by -legSwing
     float backArmAngle;    // back arm, turned at BACK_SHOULDER
     float frontArmAngle;   // front arm and whatever it holds (weapon), turned at FRONT_SHOULDER
+    float recoil;          // Beram: gun kick after firing, 1 right after the shot, fading to 0
+    float lean;            // Thalma: whole body tilted forward (degrees, negative) while she runs; 0 = upright
+    float flinch;          // Tayseer: pushed back (pixels, negative) when hit; 0 = standing still
+    float breathe;         // Tayseer: height scale of his shirt while he breathes (about 0.98 .. 1.02)
 };
 
 // One leg hanging from the hip at (hipX, hipY), swung by angleDegrees (positive = foot moves forward).

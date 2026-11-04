@@ -5,18 +5,26 @@
 #include <cmath>
 
 // ===================== PLAYER 3: Tayseer Pasha (defense, police uniform) =====================
-void drawTayseer(float walkTime, float attack) {
-    float breathe = 1.0f + 0.02f * sin(walkTime * 2.0f);     // standing guard, slight breathing
-    float flinch = (attack > 0) ? -3.0f * attack : 0;        // pushed back a little when hit
+// Animation: he stands guard (legs never swing), breathes slightly, and is pushed back up to 3 pixels when hit.
+static CharacterPose tayseerPose(float walkTime, float hitAmount) {
+    CharacterPose pose = {};
+    pose.breathe = 1.0f + 0.02f * sin(walkTime * 2.0f);
+    pose.flinch = (hitAmount > 0) ? -3.0f * hitAmount : 0;
+    return pose;
+}
+
+void drawTayseer(float walkTime, float hitAmount) {
+    CharacterPose pose = tayseerPose(walkTime, hitAmount);
 
     pushMatrix();
-    translate(flinch, 0);
-    drawLeg(-6, 30, 0, 26, 0.10f, 0.10f, 0.12f, 0.05f, 0.05f, 0.05f);      // black trousers, boots
-    drawLeg(5, 30, 0, 26, 0.12f, 0.12f, 0.14f, 0.05f, 0.05f, 0.05f);
+    translate(pose.flinch, 0);
+    // legs: a wider stance than the standard hips (BACK_HIP_X / FRONT_HIP_X), and they never swing
+    drawLeg(-6, HIP_Y, 0, 26, 0.10f, 0.10f, 0.12f, 0.05f, 0.05f, 0.05f);   // black trousers, boots
+    drawLeg(5, HIP_Y, 0, 26, 0.12f, 0.12f, 0.14f, 0.05f, 0.05f, 0.05f);
 
     // big white uniform shirt (wide belly) with black belt
     pushMatrix();
-    scale(1, breathe);
+    scale(1, pose.breathe);
     drawEllipse(1, 42, 15, 15, 0.95f, 0.95f, 0.95f);
     popMatrix();
     drawRectangle(-14, 29, 28, 4, 0.08f, 0.08f, 0.08f);
