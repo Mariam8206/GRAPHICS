@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -88,7 +88,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)External\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)libraries\GLFW\include;$(ProjectDir)libraries\GLAD\include;$(ProjectDir)libraries\GLM;$(ProjectDir)libraries\stb_image;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -103,7 +103,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)External\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)libraries\GLFW\include;$(ProjectDir)libraries\GLAD\include;$(ProjectDir)libraries\GLM;$(ProjectDir)libraries\stb_image;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -118,12 +118,12 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)External\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)libraries\GLFW\include;$(ProjectDir)libraries\GLAD\include;$(ProjectDir)libraries\GLM;$(ProjectDir)libraries\stb_image;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)libraries\GLFW\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glfw3.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -135,47 +135,69 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)External\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)libraries\GLFW\include;$(ProjectDir)libraries\GLAD\include;$(ProjectDir)libraries\GLM;$(ProjectDir)libraries\stb_image;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)libraries\GLFW\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glfw3.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="renderer.cpp" />
-    <ClCompile Include="lanes.cpp" />
-    <ClCompile Include="environment.cpp" />
-    <ClCompile Include="ui.cpp" />
-    <ClCompile Include="text_labels.cpp" />
-    <ClCompile Include="screens.cpp" />
-    <ClCompile Include="cutscene.cpp" />
-    <ClCompile Include="characters.cpp" />
-    <ClCompile Include="game.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="src\glad.c">
+    <ClCompile Include="cutscene\cutscene.cpp" />
+    <ClCompile Include="players\melee\anab_man.cpp" />
+    <ClCompile Include="players\ranged\beram.cpp" />
+    <ClCompile Include="players\defense\tayseer.cpp" />
+    <ClCompile Include="enemies\easy\spider_man.cpp" />
+    <ClCompile Include="enemies\medium\sareeh_el_feel.cpp" />
+    <ClCompile Include="enemies\hard\abla_thalma.cpp" />
+    <ClCompile Include="shared\character_parts.cpp" />
+    <ClCompile Include="environment\environment.cpp" />
+    <ClCompile Include="environment\lanes\lanes.cpp" />
+    <ClCompile Include="ui\ui.cpp" />
+    <ClCompile Include="ui\screens.cpp" />
+    <ClCompile Include="ui\text_labels.cpp" />
+    <ClCompile Include="game\game.cpp" />
+    <ClCompile Include="game\collectibles\coin.cpp" />
+    <ClCompile Include="renderer\renderer.cpp" />
+    <ClCompile Include="libraries\GLAD\src\glad.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsC</CompileAs>
-    </ClCompile>
+    </ClCompile>  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="config.h" />
+    <ClInclude Include="cutscene\cutscene.h" />
+    <ClInclude Include="players\players.h" />
+    <ClInclude Include="players\melee\anab_man.h" />
+    <ClInclude Include="players\ranged\beram.h" />
+    <ClInclude Include="players\defense\tayseer.h" />
+    <ClInclude Include="enemies\enemies.h" />
+    <ClInclude Include="enemies\easy\spider_man.h" />
+    <ClInclude Include="enemies\medium\sareeh_el_feel.h" />
+    <ClInclude Include="enemies\hard\abla_thalma.h" />
+    <ClInclude Include="shared\character_parts.h" />
+    <ClInclude Include="environment\environment.h" />
+    <ClInclude Include="environment\lanes\lanes.h" />
+    <ClInclude Include="ui\ui.h" />
+    <ClInclude Include="ui\screens.h" />
+    <ClInclude Include="ui\text_labels.h" />
+    <ClInclude Include="game\game.h" />
+    <ClInclude Include="game\collectibles\coin.h" />
+    <ClInclude Include="renderer\renderer.h" />
+    <ClInclude Include="libraries\stb_image\stb_image.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="characters.h" />
-    <ClInclude Include="game.h" />
-    <ClInclude Include="environment.h" />
-    <ClInclude Include="ui.h" />
-    <ClInclude Include="text_labels.h" />
-    <ClInclude Include="screens.h" />
-    <ClInclude Include="cutscene.h" />
-    <ClInclude Include="include\stb_image.h" />
-    <ClInclude Include="config.h" />
-    <ClInclude Include="renderer.h" />
-    <ClInclude Include="lanes.h" />
+    <None Include="documentation\README.md" />
+    <None Include="documentation\CREDITS.md" />
+    <None Include="documentation\REQUIREMENTS.md" />
+    <None Include="ui\assets\labels\labels.tsv" />
+    <None Include="ui\assets\labels\make_labels.ps1" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

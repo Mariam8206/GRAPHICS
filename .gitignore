@@ -16,6 +16,8 @@ x86/
 *.obj
 *.pch
 *.lib
+# ...except the GLFW library the game links against (third-party, not a build output)
+!libraries/GLFW/lib/glfw3.lib
 *.exp
 
 # User-specific files

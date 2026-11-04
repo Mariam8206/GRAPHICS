@@ -26,23 +26,23 @@ const int TOTAL_WAVES = 3;
 const int STARTING_COINS = 30;
 // Buying price: paid for EVERY successful placement.
 const int MELEE_PRICE = 10;
-const int RANGED_PRICE = 40;
-const int DEFENSE_PRICE = 60;
+const int RANGED_PRICE = 20;
+const int DEFENSE_PRICE = 30;
 // Unlocking threshold (PDF): a card is unlocked while the balance is at least this value and locks again as soon
-// as the balance falls below it (0 = always unlocked). Unlocking does not cost anything; buying costs the price.
+// as the balance falls below it (0 = always unlocked). Team decision: the threshold IS the price (2x and 3x the
+// Melee price), so a character can be bought the moment it is affordable, in any wave.
 const int MELEE_UNLOCK_AT = 0;
-const int RANGED_UNLOCK_AT = 100;
-const int DEFENSE_UNLOCK_AT = 150;
+const int RANGED_UNLOCK_AT = RANGED_PRICE;     // 20
+const int DEFENSE_UNLOCK_AT = DEFENSE_PRICE;   // 30
 // Field limits (how many of each character can be on the field at the same time)
 const int MELEE_FIELD_LIMIT = 7;
 const int RANGED_FIELD_LIMIT = 4;
 const int DEFENSE_FIELD_LIMIT = 4;
 const int DEFENSE_PER_LANE_LIMIT = 1;    // Defense never moves, so a second one in a lane would stand on the first
-const float PLACEMENT_COOLDOWN = 2.0f;   // seconds, separate for each character type
-// Coins dropped by a defeated enemy
+// Coins dropped by a defeated enemy (team decision: every enemy is worth 10)
 const int EASY_REWARD = 10;
-const int MEDIUM_REWARD = 20;
-const int HARD_REWARD = 30;
+const int MEDIUM_REWARD = 10;
+const int HARD_REWARD = 10;
 const float COIN_PICKUP_RADIUS = 22.0f;  // the mouse collects a coin within this many pixels
 const float COIN_RADIUS = 11.0f;         // drawn size of a dropped coin; a player character touching it collects it
 const float MESSAGE_TIME = 1.5f;         // how long a placement message ("Not enough coins") stays
@@ -60,17 +60,17 @@ const int HARD_ENEMY_DAMAGE = 2;   // hard melee enemy
 
 // ===================== Tuning (team table; adjust by playing) =====================
 // Team values are in "screen widths per second"; multiplied by SCREEN_WIDTH to get pixels per second.
-const float EASY_SPEED = 0.10f * SCREEN_WIDTH;
-const float MEDIUM_SPEED = 0.10f * SCREEN_WIDTH;
-const float HARD_SPEED = 0.16f * SCREEN_WIDTH;           // "runs"
-const float ENEMY_ATTACK_INTERVAL = 2.0f;                // seconds between enemy attacks
-const float PROJECTILE_SPEED = 0.50f * SCREEN_WIDTH;
-const float JUMP_DURATION = 0.5f;
-const float DUCK_DURATION = 0.5f;
+const float EASY_SPEED = 0.04f * SCREEN_WIDTH;
+const float MEDIUM_SPEED = 0.05f * SCREEN_WIDTH;
+const float HARD_SPEED = 0.06f * SCREEN_WIDTH;           // "runs"
+const float ENEMY_ATTACK_INTERVAL = 3.0f;                // seconds between enemy attacks (easier: was 2.0)
+const float PROJECTILE_SPEED = 0.45f * SCREEN_WIDTH;
+const float JUMP_DURATION = 0.6f;
+const float DUCK_DURATION = 0.6f;
 // Not in the team table; chosen during development (adjust by playing):
-const float PLAYER_SPEED = 0.05f * SCREEN_WIDTH;         // walking speed of melee and ranged players
-const float MELEE_ATTACK_INTERVAL = 1.0f;
-const float RANGED_ATTACK_INTERVAL = 1.5f;
-const float SPAWN_INTERVAL = 3.0f;                       // seconds between enemy spawns inside a wave
-const float WAVE_BREAK = 3.0f;                           // pause (with banner) before the next wave
+const float PLAYER_SPEED = 0.07f * SCREEN_WIDTH;         // walking speed of melee and ranged players
+const float MELEE_ATTACK_INTERVAL = 0.7f;                // must stay longer than MELEE_SWING_TIME (game.cpp)
+const float RANGED_ATTACK_INTERVAL = 1.0f;
+const float SPAWN_INTERVAL = 6.5f;                       // seconds between enemy spawns inside a wave
+const float WAVE_BREAK = 5.0f;                           // pause (with banner) before the next wave
 const float JUMP_HEIGHT = 60.0f;                         // pixels at the top of a jump

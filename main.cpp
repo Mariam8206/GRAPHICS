@@ -5,14 +5,14 @@
 #include <ctime>
 
 #include "config.h"
-#include "renderer.h"
-#include "lanes.h"
-#include "environment.h"
-#include "ui.h"
-#include "game.h"
-#include "text_labels.h"
-#include "screens.h"
-#include "cutscene.h"
+#include "renderer/renderer.h"
+#include "environment/lanes/lanes.h"
+#include "environment/environment.h"
+#include "ui/ui.h"
+#include "game/game.h"
+#include "ui/text_labels.h"
+#include "ui/screens.h"
+#include "cutscene/cutscene.h"
 
 // Keyboard: GLFW calls keyCallback when a key changes; we remember each PRESS once (like mouse clicks).
 static bool keyWasPressed[GLFW_KEY_LAST + 1] = { false };
@@ -56,7 +56,7 @@ int main() {
     glViewport(0, 0, framebufferWidth, framebufferHeight);
 
     if (!initRenderer()) return -1;
-    if (!initTextLabels()) {   // UI text images (assets/ui): the game cannot show any text without them
+    if (!initTextLabels()) {   // UI text images (ui/assets/labels): the game cannot show any text without them
         glfwHideWindow(window);   // only the error box stays on screen, not an empty game window
         showTextImagesError();
         glfwTerminate();
@@ -108,7 +108,7 @@ int main() {
                     clickCard((PlayerType)hoveredCard);                         // select / cancel a card
                 } else if (hoveredLane != -1) {
                     if (getSelectedCard() != -1)
-                        tryPlacePlayer((PlayerType)getSelectedCard(), hoveredLane);   // card first, then lane
+                        tryPlacePlayer((PlayerType)getSelectedCard(), hoveredLane, mouseX);   // card first, then lane (Tayseer: at the click)
                     else
                         laneSelected[hoveredLane] = !laneSelected[hoveredLane];   // no card: toggle for jump/duck
                 }

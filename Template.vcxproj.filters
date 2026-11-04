@@ -1,87 +1,205 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    <Filter Include="cutscene">
+      <UniqueIdentifier>{5df9b2d6-da85-4aef-857f-36b3f9e98497}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    <Filter Include="documentation">
+      <UniqueIdentifier>{f8edb81a-8866-421b-9c1d-0296ab396ee7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    <Filter Include="enemies">
+      <UniqueIdentifier>{18cd58df-5610-4cdb-9a34-c126f888628c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="enemies\easy">
+      <UniqueIdentifier>{5da72552-0f70-4747-981a-d479dd25b2c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="enemies\hard">
+      <UniqueIdentifier>{9f9fe080-6a57-402a-af94-2f638ebf22e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="enemies\medium">
+      <UniqueIdentifier>{da4f8464-8764-4143-85d2-2654ce38d763}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="environment">
+      <UniqueIdentifier>{856d348d-183b-4ccb-854c-1b43fd851593}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="environment\lanes">
+      <UniqueIdentifier>{7d7fd0c6-a088-4393-9185-2d7468f43592}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="game">
+      <UniqueIdentifier>{f8badbda-f57f-48fe-8fb5-d3c723c2daad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="game\collectibles">
+      <UniqueIdentifier>{bbe3a9b1-7f4c-4089-9391-0c684bdf3d00}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libraries">
+      <UniqueIdentifier>{bf034bc5-545f-4016-badb-7d982a715930}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libraries\GLAD">
+      <UniqueIdentifier>{4d8e7418-1a38-4bbe-8475-4a0e2c30f170}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libraries\GLAD\src">
+      <UniqueIdentifier>{ead2c9dd-2cbd-418b-ae2c-3db5fe31b3c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libraries\stb_image">
+      <UniqueIdentifier>{67938ce2-02d8-4625-ac36-eb3c1bb35de0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="players">
+      <UniqueIdentifier>{84467c66-1208-49ac-9f31-41fecab59663}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="players\defense">
+      <UniqueIdentifier>{c68ac2d0-7186-49a6-9c66-0fb164a2c42b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="players\melee">
+      <UniqueIdentifier>{67628d8b-736f-49e6-9190-c4e9dbb4a812}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="players\ranged">
+      <UniqueIdentifier>{14578411-8be1-48a2-a1c8-d5939195da57}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="renderer">
+      <UniqueIdentifier>{46b3e784-c092-4260-a243-6a0a7c948bcc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="shared">
+      <UniqueIdentifier>{6b77e320-e9ad-4e40-a3cf-4d9a2d4ec6bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ui">
+      <UniqueIdentifier>{940a2852-a809-4f5f-a82f-7c5039822c66}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ui\assets">
+      <UniqueIdentifier>{ba5e05d1-c239-465f-9a00-f127e2b705aa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ui\assets\labels">
+      <UniqueIdentifier>{308f9c9a-e37b-4b9f-9b50-8d37ce2ab1ec}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\glad.c">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="cutscene\cutscene.cpp">
+      <Filter>cutscene</Filter>
     </ClCompile>
-    <ClCompile Include="renderer.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="players\melee\anab_man.cpp">
+      <Filter>players\melee</Filter>
     </ClCompile>
-    <ClCompile Include="lanes.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="players\ranged\beram.cpp">
+      <Filter>players\ranged</Filter>
     </ClCompile>
-    <ClCompile Include="environment.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="players\defense\tayseer.cpp">
+      <Filter>players\defense</Filter>
     </ClCompile>
-    <ClCompile Include="ui.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="enemies\easy\spider_man.cpp">
+      <Filter>enemies\easy</Filter>
     </ClCompile>
-    <ClCompile Include="text_labels.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="enemies\medium\sareeh_el_feel.cpp">
+      <Filter>enemies\medium</Filter>
     </ClCompile>
-    <ClCompile Include="screens.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="enemies\hard\abla_thalma.cpp">
+      <Filter>enemies\hard</Filter>
     </ClCompile>
-    <ClCompile Include="cutscene.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="shared\character_parts.cpp">
+      <Filter>shared</Filter>
     </ClCompile>
-    <ClCompile Include="characters.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="environment\environment.cpp">
+      <Filter>environment</Filter>
     </ClCompile>
-    <ClCompile Include="game.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="environment\lanes\lanes.cpp">
+      <Filter>environment\lanes</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="ui\ui.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\screens.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\text_labels.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="game\game.cpp">
+      <Filter>game</Filter>
+    </ClCompile>
+    <ClCompile Include="game\collectibles\coin.cpp">
+      <Filter>game\collectibles</Filter>
+    </ClCompile>
+    <ClCompile Include="renderer\renderer.cpp">
+      <Filter>renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\GLAD\src\glad.c">
+      <Filter>libraries\GLAD\src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="characters.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="config.h" />
+    <ClInclude Include="cutscene\cutscene.h">
+      <Filter>cutscene</Filter>
     </ClInclude>
-    <ClInclude Include="game.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="players\players.h">
+      <Filter>players</Filter>
     </ClInclude>
-    <ClInclude Include="environment.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="players\melee\anab_man.h">
+      <Filter>players\melee</Filter>
     </ClInclude>
-    <ClInclude Include="ui.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="players\ranged\beram.h">
+      <Filter>players\ranged</Filter>
     </ClInclude>
-    <ClInclude Include="text_labels.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="players\defense\tayseer.h">
+      <Filter>players\defense</Filter>
     </ClInclude>
-    <ClInclude Include="screens.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="enemies\enemies.h">
+      <Filter>enemies</Filter>
     </ClInclude>
-    <ClInclude Include="cutscene.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="enemies\easy\spider_man.h">
+      <Filter>enemies\easy</Filter>
     </ClInclude>
-    <ClInclude Include="include\stb_image.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="enemies\medium\sareeh_el_feel.h">
+      <Filter>enemies\medium</Filter>
     </ClInclude>
-    <ClInclude Include="config.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="enemies\hard\abla_thalma.h">
+      <Filter>enemies\hard</Filter>
     </ClInclude>
-    <ClInclude Include="renderer.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="shared\character_parts.h">
+      <Filter>shared</Filter>
     </ClInclude>
-    <ClInclude Include="lanes.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="environment\environment.h">
+      <Filter>environment</Filter>
     </ClInclude>
+    <ClInclude Include="environment\lanes\lanes.h">
+      <Filter>environment\lanes</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\ui.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\screens.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\text_labels.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="game\game.h">
+      <Filter>game</Filter>
+    </ClInclude>
+    <ClInclude Include="game\collectibles\coin.h">
+      <Filter>game\collectibles</Filter>
+    </ClInclude>
+    <ClInclude Include="renderer\renderer.h">
+      <Filter>renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\stb_image\stb_image.h">
+      <Filter>libraries\stb_image</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="documentation\README.md">
+      <Filter>documentation</Filter>
+    </None>
+    <None Include="documentation\CREDITS.md">
+      <Filter>documentation</Filter>
+    </None>
+    <None Include="documentation\REQUIREMENTS.md">
+      <Filter>documentation</Filter>
+    </None>
+    <None Include="ui\assets\labels\labels.tsv">
+      <Filter>ui\assets\labels</Filter>
+    </None>
+    <None Include="ui\assets\labels\make_labels.ps1">
+      <Filter>ui\assets\labels</Filter>
+    </None>
   </ItemGroup>
 </Project>
