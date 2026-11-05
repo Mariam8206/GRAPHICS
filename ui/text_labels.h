@@ -1,6 +1,7 @@
 #pragma once
 // UI text. Every label is a PNG made by ui/assets/labels/make_labels.ps1 (white text, Dubai Bold), drawn tinted.
-// Numbers are drawn with digit images. The game needs the folder ui/assets/labels: without it, it shows an error and stops.
+// Numbers are drawn with digit images. The game needs the folder ui/assets/labels: without it, it shows an error
+// and stops.
 #include <string>
 #include <vector>
 
@@ -12,7 +13,7 @@ void showTextImagesError();      // error box for a failed initTextLabels (the c
 std::string textAssetFolder();   // where the images were found ("" if not found)
 
 // One line of text, written in reading order (left to right on screen): labels (by id) and numbers.
-// Numbers are plain ASCII ("40", "3/7", "1.5", "+10").
+// Numbers are plain ASCII: digits and "/", "+", "." (e.g. "40", "+10").
 class TextLine {
 public:
     explicit TextLine(TextClass textClass) : cls(textClass) {}

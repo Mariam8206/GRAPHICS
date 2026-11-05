@@ -11,7 +11,7 @@ const int PLAYER_TYPE_COUNT = 3;
 enum PlaceResult { PLACE_OK, PLACE_GAME_OVER, PLACE_LOCKED, PLACE_NO_COINS,
                    PLACE_BAD_LANE, PLACE_NO_ROOM };
 
-void resetGame();                  // clears everything (coins and unlocks too) and starts wave 1
+void resetGame();                  // clears everything (coins back to start, Anab Man first again) and starts wave 1
 void updateGame(float deltaTime);  // moves and fights; does nothing once the game is won or lost (freeze)
 void drawGame(float time);         // characters, coins, projectiles, health bars, messages, banners
 

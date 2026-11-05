@@ -26,7 +26,8 @@ void drawSpiderMan(float walkTime, bool moving, float attack) {
     drawCircle(0, -21, 3.3f, redR * 0.8f, redG, redB);
     popMatrix();
 
-    drawLeg(BACK_HIP_X, HIP_Y, pose.legSwing, 26, blueR * 0.8f, blueG * 0.8f, blueB * 0.8f, redR * 0.8f, redG, redB);  // blue legs, red boots
+    // blue legs, red boots
+    drawLeg(BACK_HIP_X, HIP_Y, pose.legSwing, 26, blueR * 0.8f, blueG * 0.8f, blueB * 0.8f, redR * 0.8f, redG, redB);
     drawLeg(FRONT_HIP_X, HIP_Y, -pose.legSwing, 26, blueR, blueG, blueB, redR, redG, redB);
 
     drawQuad(-10, 29, 10, 29, 12, 55, -12, 55, blueR, blueG, blueB);       // blue sides

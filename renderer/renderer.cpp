@@ -87,8 +87,11 @@ void popMatrix()  { currentModel = matrixStack.back(); matrixStack.pop_back(); }
 
 // glm multiplies each new matrix on the RIGHT (currentModel * T), so the call written LAST acts on the shape FIRST.
 void translate(float tx, float ty) { currentModel = glm::translate(currentModel, glm::vec3(tx, ty, 0.0f)); }
-void rotate(float angleDegrees)    { currentModel = glm::rotate(currentModel, glm::radians(angleDegrees), glm::vec3(0.0f, 0.0f, 1.0f)); }
-void scale(float sx, float sy)     { currentModel = glm::scale(currentModel, glm::vec3(sx, sy, 1.0f)); }   // negative = flip
+void rotate(float angleDegrees) {
+    currentModel = glm::rotate(currentModel, glm::radians(angleDegrees), glm::vec3(0.0f, 0.0f, 1.0f));
+}
+// negative = flip
+void scale(float sx, float sy)     { currentModel = glm::scale(currentModel, glm::vec3(sx, sy, 1.0f)); }
 
 // ===================== Setup / per frame =====================
 bool initRenderer() {
@@ -193,7 +196,8 @@ bool loadTexture(const char* path, Texture& texture) {
 }
 
 // (x, y) is the BOTTOM-LEFT corner. The image is multiplied by the color (white text takes the color).
-void drawImage(const Texture& texture, float x, float y, float width, float height, float r, float g, float b, float a) {
+void drawImage(const Texture& texture, float x, float y, float width, float height,
+               float r, float g, float b, float a) {
     if (texture.id == 0) return;
     float vertices[] = {
         x,         y,          0, 0,
@@ -247,7 +251,8 @@ void drawRectangle(float x, float y, float width, float height, float r, float g
 }
 
 // Only the border: 4 thin rectangles (bottom, top, left, right) that do not overlap at the corners.
-void drawRectangleOutline(float x, float y, float width, float height, float thickness, float r, float g, float b, float a) {
+void drawRectangleOutline(float x, float y, float width, float height, float thickness,
+                          float r, float g, float b, float a) {
     drawRectangle(x, y, width, thickness, r, g, b, a);                                                  // bottom
     drawRectangle(x, y + height - thickness, width, thickness, r, g, b, a);                             // top
     drawRectangle(x, y + thickness, thickness, height - 2 * thickness, r, g, b, a);                     // left
@@ -260,7 +265,8 @@ void drawTriangle(float x1, float y1, float x2, float y2, float x3, float y3, fl
 }
 
 // Any 4-cornered shape (e.g. a trapezoid). Corners must be given in order around the shape.
-void drawQuad(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, float r, float g, float b, float a) {
+void drawQuad(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4,
+              float r, float g, float b, float a) {
     float vertices[] = { x1, y1,  x2, y2,  x3, y3,     x1, y1,  x3, y3,  x4, y4 };
     drawVertices(vertices, 6, GL_TRIANGLES, r, g, b, a);
 }
@@ -296,7 +302,8 @@ void drawCircle(float centerX, float centerY, float radius, float r, float g, fl
 
 // Part of a circle's outline, from startDegrees to endDegrees (counter-clockwise, 0 = pointing right),
 // made of short thick lines. Used for glasses frames, smiles, the Arabic letter emblem, etc.
-void drawArc(float centerX, float centerY, float radius, float startDegrees, float endDegrees, float thickness, float r, float g, float b, float a) {
+void drawArc(float centerX, float centerY, float radius, float startDegrees, float endDegrees, float thickness,
+             float r, float g, float b, float a) {
     const int STEPS = 16;
     for (int i = 0; i < STEPS; i++) {
         float a1 = (startDegrees + (endDegrees - startDegrees) * i / STEPS) * PI / 180.0f;
@@ -313,7 +320,8 @@ void setClipRect(float x, float y, float width, float height) {
     glGetIntegerv(GL_VIEWPORT, viewport);
     float sx = viewport[2] / (float)SCREEN_WIDTH, sy = viewport[3] / (float)SCREEN_HEIGHT;
     glEnable(GL_SCISSOR_TEST);
-    glScissor(viewport[0] + (GLint)(x * sx), viewport[1] + (GLint)(y * sy), (GLsizei)ceil(width * sx), (GLsizei)ceil(height * sy));
+    glScissor(viewport[0] + (GLint)(x * sx), viewport[1] + (GLint)(y * sy),
+              (GLsizei)ceil(width * sx), (GLsizei)ceil(height * sy));
 }
 void clearClipRect() { glDisable(GL_SCISSOR_TEST); }
 

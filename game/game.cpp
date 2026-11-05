@@ -139,7 +139,8 @@ static void addCoins(int amount) {
     coins += amount;
     for (int t = PLAYER_RANGED; t < PLAYER_TYPE_COUNT; t++)   // Anab Man is unlocked from the start: no message for him
         if (before < UNLOCK_AT[t] && coins >= UNLOCK_AT[t] && isUnlocked((PlayerType)t)) {
-            static const char* UNLOCKED_ID[PLAYER_TYPE_COUNT] = { nullptr, "msg_unlocked_ranged", "msg_unlocked_defense" };
+            static const char* UNLOCKED_ID[PLAYER_TYPE_COUNT] = { nullptr, "msg_unlocked_ranged",
+                                                                  "msg_unlocked_defense" };
             showMessage(UNLOCKED_ID[t], TextLine(TC_L).label(UNLOCKED_ID[t]), 0.4f, 1.0f, 0.5f);
         }
 }
@@ -225,13 +226,16 @@ static void removeDefeated() {
     for (const Enemy& e : enemies)
         if (e.health <= 0) {
             addHitEffect(e.x, laneGround(e.lane) + 35, 1.0f, 0.85f, 0.3f);
-            CoinPickup c = { std::min(e.x, SCREEN_WIDTH - ENEMY_ENTRY_ZONE), laneGround(e.lane) + 22, REWARD[e.type], 0 };
+            CoinPickup c = { std::min(e.x, SCREEN_WIDTH - ENEMY_ENTRY_ZONE), laneGround(e.lane) + 22,
+                             REWARD[e.type], 0 };
             coinPickups.push_back(c);
         }
     for (const Player& p : players)
         if (p.health <= 0) addHitEffect(p.x, laneGround(p.lane) + 35, 0.6f, 0.6f, 0.6f);
-    enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](const Enemy& e) { return e.health <= 0; }), enemies.end());
-    players.erase(std::remove_if(players.begin(), players.end(), [](const Player& p) { return p.health <= 0; }), players.end());
+    enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](const Enemy& e) { return e.health <= 0; }),
+                  enemies.end());
+    players.erase(std::remove_if(players.begin(), players.end(), [](const Player& p) { return p.health <= 0; }),
+                  players.end());
 }
 
 // ===================== Public functions =====================
@@ -305,7 +309,8 @@ static float defenseSpot(int lane, float clickX) {
     for (int dir = -1; dir <= 1; dir += 2) {                   // first towards the lab, then away from it
         float x = start;
         bool moved = true;
-        for (size_t tries = 0; moved && tries <= enemies.size() + players.size(); tries++) {   // stepping past one body can reach the next
+        // stepping past one body can reach the next
+        for (size_t tries = 0; moved && tries <= enemies.size() + players.size(); tries++) {
             moved = false;
             for (const Enemy& e : enemies) {
                 if (e.lane != lane || e.health <= 0) continue;
@@ -313,7 +318,10 @@ static float defenseSpot(int lane, float clickX) {
                 if (x + half > e.x - eHalf && x - half < e.x + eHalf) { x = e.x + dir * (eHalf + half); moved = true; }
             }
             for (const Player& p : players)
-                if (p.type == PLAYER_DEFENSE && p.lane == lane && fabs(x - p.x) < TAYSEER_SPACING) { x = p.x + dir * TAYSEER_SPACING; moved = true; }
+                if (p.type == PLAYER_DEFENSE && p.lane == lane && fabs(x - p.x) < TAYSEER_SPACING) {
+                    x = p.x + dir * TAYSEER_SPACING;
+                    moved = true;
+                }
         }
         if (dir < 0) {
             x = std::max(x, leftmost);                         // as before: an enemy at the lab end is not avoided
@@ -327,7 +335,8 @@ static float defenseSpot(int lane, float clickX) {
 
 PlaceResult tryPlacePlayer(PlayerType type, int lane, float clickX) {
     PlaceResult result = checkPlacement(type, lane);
-    float spot = (result == PLACE_OK && type == PLAYER_DEFENSE) ? defenseSpot(lane, clickX) : 0;   // clickX -1 = left end
+    // Tayseer's spot in the lane (clickX -1 = left end); -1 = no free spot
+    float spot = (result == PLACE_OK && type == PLAYER_DEFENSE) ? defenseSpot(lane, clickX) : 0;
     if (result == PLACE_OK && spot < 0) result = PLACE_NO_ROOM;
     if (result != PLACE_OK) {
         showRefusal(type, result);
@@ -595,7 +604,8 @@ static void updateProjectiles(float dt) {
             for (Enemy& e : enemies) {
                 if (e.lane != shot.lane || e.health <= 0) continue;
                 float eHalf = enemyHalfWidth(e.type);
-                if (pathRight > e.x - eHalf && pathLeft < e.x + eHalf && (!hit || e.x - eHalf < hit->x - enemyHalfWidth(hit->type)))
+                if (pathRight > e.x - eHalf && pathLeft < e.x + eHalf
+                    && (!hit || e.x - eHalf < hit->x - enemyHalfWidth(hit->type)))
                     hit = &e;
             }
             if (hit) {
@@ -626,7 +636,8 @@ static void updateProjectiles(float dt) {
                 hurtPlayer(*hit, shot.damage);
                 shot.alive = false;
             } else if (shot.x < BASE_WIDTH) {
-                addHitEffect(BASE_WIDTH, laneGround(shot.lane) + shot.height, 0.8f, 0.8f, 0.8f);   // splats on the lab wall
+                // splats on the lab wall
+                addHitEffect(BASE_WIDTH, laneGround(shot.lane) + shot.height, 0.8f, 0.8f, 0.8f);
                 shot.alive = false;
             }
         }
@@ -650,12 +661,17 @@ void updateGame(float dt) {
 
     // Remove what is finished
     removeDefeated();
-    projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(), [](const Projectile& s) { return !s.alive; }), projectiles.end());
+    projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(),
+                                     [](const Projectile& s) { return !s.alive; }),
+                      projectiles.end());
     for (HitEffect& fx : effects) fx.timer -= dt;
-    effects.erase(std::remove_if(effects.begin(), effects.end(), [](const HitEffect& fx) { return fx.timer <= 0; }), effects.end());
+    effects.erase(std::remove_if(effects.begin(), effects.end(), [](const HitEffect& fx) { return fx.timer <= 0; }),
+                  effects.end());
     for (CoinPickup& c : coinPickups) c.age += dt;
     for (FloatingText& t : floatingTexts) { t.timer -= dt; t.y += 40 * dt; }
-    floatingTexts.erase(std::remove_if(floatingTexts.begin(), floatingTexts.end(), [](const FloatingText& t) { return t.timer <= 0; }), floatingTexts.end());
+    floatingTexts.erase(std::remove_if(floatingTexts.begin(), floatingTexts.end(),
+                                       [](const FloatingText& t) { return t.timer <= 0; }),
+                        floatingTexts.end());
 }
 
 // ===================== Drawing =====================
@@ -684,7 +700,8 @@ static void drawHealthBar(float centerX, float y, int health, int maxHealth, boo
             drawRectangle(sx, y, segment, 6, 0.35f, 0.35f, 0.35f);
         }
     }
-    TextLine(TC_S).outlined().number(health).drawLeft(left + width + 5, y - 5, 1.0f, 1.0f, 1.0f);   // centered on the bar
+    // centered on the bar
+    TextLine(TC_S).outlined().number(health).drawLeft(left + width + 5, y - 5, 1.0f, 1.0f, 1.0f);
 }
 
 static void drawPlayerUnit(const Player& p, float time) {
@@ -727,7 +744,8 @@ static void drawEnemyUnit(const Enemy& e, float time) {
 // already placed in the same lane, so crowded fights (players AND enemies) stay readable.
 struct PlacedBar { int lane; float left, right, y; };
 
-static float findFreeBarHeight(std::vector<PlacedBar>& placedBars, int lane, float centerX, float startY, int maxHealth) {
+static float findFreeBarHeight(std::vector<PlacedBar>& placedBars, int lane, float centerX, float startY,
+                               int maxHealth) {
     float halfWidth = (maxHealth * 8.5f + 22) / 2;                       // segments + frame + number
     float y = startY;
     bool moved = true;
@@ -737,7 +755,8 @@ static float findFreeBarHeight(std::vector<PlacedBar>& placedBars, int lane, flo
             float above = b.y + 13;
             // compare with the exact value we move to: with fabs(b.y - y) < 13, float rounding could
             // keep "overlapping" after the move and loop forever
-            if (b.lane == lane && y > b.y - 13 && y < above && centerX - halfWidth < b.right && centerX + halfWidth > b.left) {
+            if (b.lane == lane && y > b.y - 13 && y < above
+                && centerX - halfWidth < b.right && centerX + halfWidth > b.left) {
                 y = above;
                 moved = true;
             }

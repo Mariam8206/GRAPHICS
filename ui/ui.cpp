@@ -65,11 +65,15 @@ static void drawCard(int i, bool hovered, float time) {
     float right = x + w - 6;
     TextLine(TC_N).label(CARD_NAME_ID[i]).drawRight(right, y + 73, 1.0f * textDim, 0.92f * textDim, 0.70f * textDim);
     TextLine hpLine(TC_S);
-    hpLine.label("hp").number(i == PLAYER_DEFENSE ? DEFENSE_HEALTH : (i == PLAYER_RANGED ? RANGED_HEALTH : MELEE_HEALTH));
+    hpLine.label("hp").number(i == PLAYER_DEFENSE ? DEFENSE_HEALTH
+                              : (i == PLAYER_RANGED ? RANGED_HEALTH : MELEE_HEALTH));
     hpLine.drawRight(right, y + 57, 0.55f * textDim, 1.0f * textDim, 0.55f * textDim);
     float roleRight = right - hpLine.width() - 10;
-    if (type == PLAYER_DEFENSE) TextLine(TC_S).label("blocks").drawRight(roleRight, y + 57, 0.6f * textDim, 0.8f * textDim, 1.0f * textDim);
-    else TextLine(TC_S).label("dmg").number(PLAYER_DAMAGE).drawRight(roleRight, y + 57, 1.0f * textDim, 0.6f * textDim, 0.6f * textDim);
+    if (type == PLAYER_DEFENSE)
+        TextLine(TC_S).label("blocks").drawRight(roleRight, y + 57, 0.6f * textDim, 0.8f * textDim, 1.0f * textDim);
+    else
+        TextLine(TC_S).label("dmg").number(PLAYER_DAMAGE)
+            .drawRight(roleRight, y + 57, 1.0f * textDim, 0.6f * textDim, 0.6f * textDim);
 
     pushMatrix();
     translate(right - 7, y + 48);
@@ -80,13 +84,15 @@ static void drawCard(int i, bool hovered, float time) {
     if (affordable || locked) price.drawRight(right - 17, y + 37, 1.0f * textDim, 0.88f * textDim, 0.35f * textDim);
     else                      price.drawRight(right - 17, y + 37, 1.0f, 0.25f, 0.25f);   // red: not enough coins
 
-    TextLine(TC_S).label("field").number(count).drawRight(right, y + 21, 0.85f * textDim, 0.85f * textDim, 0.85f * textDim);
+    TextLine(TC_S).label("field").number(count)
+        .drawRight(right, y + 21, 0.85f * textDim, 0.85f * textDim, 0.85f * textDim);
 
     // Status strip at the bottom: the one most important reason this card can or cannot be used
     TextLine status(TC_S);
     float sr, sg, sb;
     if (locked && isWaitingForFirstMelee()) { status.label("st_meleefirst"); sr = 0.8f; sg = 0.8f; sb = 0.8f; }
-    else if (locked)          { status.label("st_unlocks").number(getUnlockThreshold(type)); sr = 0.8f; sg = 0.8f; sb = 0.8f; }
+    else if (locked)          { status.label("st_unlocks").number(getUnlockThreshold(type));
+                                sr = 0.8f; sg = 0.8f; sb = 0.8f; }
     else if (!affordable)     { status.label("st_need").number(getPrice(type)); sr = 1.0f; sg = 0.35f; sb = 0.35f; }
     else if (selected)        { status.label("st_click"); sr = 1.0f; sg = 0.85f; sb = 0.3f; }
     else                      { status.label("st_ready"); sr = 0.45f; sg = 1.0f; sb = 0.5f; }

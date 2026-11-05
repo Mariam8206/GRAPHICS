@@ -70,13 +70,14 @@ static void updateScreen(App& app, const FrameInput& input, float deltaTime, int
             if (hoveredCard != -1) {
                 clickCard((PlayerType)hoveredCard);                         // select / cancel a card
             } else if (hoveredLane != -1) {
-                if (getSelectedCard() != -1)
-                    tryPlacePlayer((PlayerType)getSelectedCard(), hoveredLane, input.mouseX);   // card first, then lane (Tayseer: at the click)
+                if (getSelectedCard() != -1)   // card first, then lane (Tayseer: at the click)
+                    tryPlacePlayer((PlayerType)getSelectedCard(), hoveredLane, input.mouseX);
                 else
                     laneSelected[hoveredLane] = !laneSelected[hoveredLane];   // no card: toggle for jump/duck
             }
         }
-        collectCoinsAt(input.mouseX, input.mouseY);   // mouse hover collects coins (player characters touching them do too, in game.cpp)
+        // mouse hover collects coins (player characters touching them do too, in game.cpp)
+        collectCoinsAt(input.mouseX, input.mouseY);
 
         // PDF: W/Up = jump, S/Down = duck, for players in the selected lanes
         if (input.jump) jumpSelectedLanes();
@@ -102,9 +103,11 @@ static void drawScreen(const App& app, const FrameInput& input, int hoveredLane,
             drawLaneHighlights(hoveredLane);
             drawGame(time);             // characters, projectiles, health bars, wave banners
             drawTopBar(getCoins(), getCurrentWave(), hoveredCard, time);   // UI on top of everything
-            TextLine(TC_M).label("hint").drawCentered((BASE_WIDTH + SCREEN_WIDTH) / 2, 4, 0.15f, 0.15f, 0.15f, 1, false);
+            TextLine(TC_M).label("hint")
+                .drawCentered((BASE_WIDTH + SCREEN_WIDTH) / 2, 4, 0.15f, 0.15f, 0.15f, 1, false);
         }
-        drawMenus(app.screen, isGameWon(), isGameLost(), input.mouseX, input.mouseY, time);   // main / pause / win-lose menu
+        // main / pause / win-lose menu
+        drawMenus(app.screen, isGameWon(), isGameLost(), input.mouseX, input.mouseY, time);
     }
 }
 

@@ -31,7 +31,8 @@ static const LabelInfo LABELS[] = {
     { "cs_title", TC_XXL }, { "cs_skip", TC_S },
 };
 static const char* CLASS_PREFIX[TEXT_CLASS_COUNT] = { "xs", "s", "m", "n", "l", "xl", "xxl", "btn" };
-static const float CLASS_HEIGHT[TEXT_CLASS_COUNT] = { 14, 17, 22, 23, 33, 32, 83, 43 };   // = image heights (make_labels.ps1)
+// = image heights (make_labels.ps1)
+static const float CLASS_HEIGHT[TEXT_CLASS_COUNT] = { 14, 17, 22, 23, 33, 32, 83, 43 };
 static const char* DIGIT_NAME[13] = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "slash", "plus", "dot" };
 
 static std::map<std::string, Texture> labelTextures;
@@ -87,7 +88,10 @@ bool initTextLabels() {
     for (int c = 0; c < TEXT_CLASS_COUNT; c++)
         for (int d = 0; d < 13; d++) {
             std::string path = folder + CLASS_PREFIX[c] + "_digit_" + DIGIT_NAME[d] + ".png";
-            if (!loadTexture(path.c_str(), digitTextures[c][d])) { std::cerr << "ERROR: missing UI image " << path << std::endl; ok = false; }
+            if (!loadTexture(path.c_str(), digitTextures[c][d])) {
+                std::cerr << "ERROR: missing UI image " << path << std::endl;
+                ok = false;
+            }
         }
     return ok;
 }

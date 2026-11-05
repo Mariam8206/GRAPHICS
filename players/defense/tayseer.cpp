@@ -49,7 +49,7 @@ void drawTayseer(float walkTime, float hitAmount) {
     drawRectangle(14, 6, 12, 66, 0.55f, 0.72f, 0.90f, 0.85f);               // clear shield
     drawRectangle(15, 50, 3, 18, 1.0f, 1.0f, 1.0f, 0.5f);                   // shine
     pushMatrix();
-    translate(25, 8);                                                       // low enough that "POLICE" ends below the hand
+    translate(25, 8);                                      // low enough that "POLICE" ends below the hand
     rotate(90);
     drawLabelAt("shield_police", 0, 0, 10, 1.0f, 1.0f, 1.0f);   // "POLICE", reading up the shield
     popMatrix();

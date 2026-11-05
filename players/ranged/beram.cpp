@@ -30,7 +30,8 @@ void drawBeram(float walkTime, bool moving, float attack) {
     drawRectangle(-2.5f, -19, 5, 11, SKIN[0] * 0.85f, SKIN[1] * 0.85f, SKIN[2] * 0.85f);
     popMatrix();
 
-    drawLeg(BACK_HIP_X, HIP_Y, pose.legSwing, 26, 0.15f, 0.20f, 0.35f, 0.35f, 0.22f, 0.12f);   // dark jeans, brown shoes
+    // dark jeans, brown shoes
+    drawLeg(BACK_HIP_X, HIP_Y, pose.legSwing, 26, 0.15f, 0.20f, 0.35f, 0.35f, 0.22f, 0.12f);
     drawLeg(FRONT_HIP_X, HIP_Y, -pose.legSwing, 26, 0.20f, 0.26f, 0.42f, 0.35f, 0.22f, 0.12f);
 
     drawQuad(-11, 29, 11, 29, 12, 55, -12, 55, shirtR, shirtG, shirtB);    // T-shirt

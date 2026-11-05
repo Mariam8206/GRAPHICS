@@ -9,7 +9,8 @@ const float PI = 3.14159265f;
 // --- Playfield layout ---
 const int LANE_COUNT = 4;                                        // the PDF needs at least 3 lanes; team approved 4
 const float LANE_HEIGHT = 110.0f;
-const float FIELD_BOTTOM = 30.0f;                                // y where the lowest lane starts (front sidewalk below)
+// y where the lowest lane starts (front sidewalk below)
+const float FIELD_BOTTOM = 30.0f;
 const float FIELD_TOP = FIELD_BOTTOM + LANE_COUNT * LANE_HEIGHT; // 470: background street starts above this
 const float BASE_WIDTH = 170.0f;                                 // laboratory (home base) occupies x = 0 .. 170
 
