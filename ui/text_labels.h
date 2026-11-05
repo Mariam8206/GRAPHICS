@@ -20,21 +20,21 @@ public:
     TextLine& label(const char* id);
     TextLine& number(const std::string& digits);
     TextLine& number(int value) { return number(std::to_string(value)); }
-    TextLine& gap(float pixels);
     TextLine& outlined() { outline = true; return *this; }   // dark 1 px outline instead of a drop shadow
                                                              // (for text over busy backgrounds: "+10", health)
     float width() const;
-    float height() const;
     // (rightX, bottomY) = bottom-right corner; shadow = dark copy 1 px down-right for readability
     void drawRight(float rightX, float bottomY, float r, float g, float b, float a = 1, bool shadow = true) const;
     void drawCentered(float centerX, float bottomY, float r, float g, float b, float a = 1, bool shadow = true) const;
     void drawLeft(float leftX, float bottomY, float r, float g, float b, float a = 1, bool shadow = true) const;
     bool empty() const { return pieces.empty(); }
 private:
-    struct Piece { int kind; std::string text; float pixels; };   // kind: 0 label, 1 number, 2 gap
+    enum PieceKind { PIECE_LABEL, PIECE_NUMBER };
+    struct Piece { PieceKind kind; std::string text; };   // text = the label id, or the digits of a number
     TextClass cls;
     bool outline = false;
     std::vector<Piece> pieces;
+    float pieceWidth(const Piece& piece) const;
     void drawPieces(float rightX, float bottomY, float r, float g, float b, float a) const;
 };
 

@@ -107,7 +107,11 @@ void drawCutscene() {
     if (between(10.0f, 10.95f)) {
         float webX = 820 - 36 - (t - 10.0f) * 700;
         float webY = STAGE_GROUND + 75 - std::min(25.0f, (t - 10.0f) * 60);
-        pushMatrix(); translate(std::max(webX, 175.0f), webY); scale(1.4f, 1.4f); drawWebBall(t); popMatrix();
+        pushMatrix();
+        translate(std::max(webX, 175.0f), webY);   // stops at the lab wall (x 175)
+        scale(1.4f, 1.4f);
+        drawWebBall(t);
+        popMatrix();
     } else if (between(10.95f, 11.4f)) {
         float u = (t - 10.95f) / 0.45f;
         drawArc(175, STAGE_GROUND + 50, 10 + 20 * u, 0, 360, 3, 0.9f, 0.9f, 0.9f, 1 - u);

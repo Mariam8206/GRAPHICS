@@ -33,10 +33,13 @@ static const LabelInfo LABELS[] = {
 static const char* CLASS_PREFIX[TEXT_CLASS_COUNT] = { "xs", "s", "m", "n", "l", "xl", "xxl", "btn" };
 // = image heights (make_labels.ps1)
 static const float CLASS_HEIGHT[TEXT_CLASS_COUNT] = { 14, 17, 22, 23, 33, 32, 83, 43 };
-static const char* DIGIT_NAME[13] = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "slash", "plus", "dot" };
+// Digit images per size class: 0-9, then "/", "+" and "." (digitIndex() below uses this order)
+static const int DIGIT_COUNT = 13;
+static const char* DIGIT_NAME[DIGIT_COUNT] = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+                                               "slash", "plus", "dot" };
 
 static std::map<std::string, Texture> labelTextures;
-static Texture digitTextures[TEXT_CLASS_COUNT][13];
+static Texture digitTextures[TEXT_CLASS_COUNT][DIGIT_COUNT];
 static std::string folder;
 
 static const LabelInfo* findLabel(const std::string& id) {
@@ -50,15 +53,15 @@ static bool fileExists(const std::string& path) { return std::ifstream(path, std
 // The game normally starts in the project folder (Visual Studio, build_and_run.bat). If it is started
 // from somewhere else, look next to the .exe and up to two folders above it (x64\Debug -> project).
 static std::string findAssetFolder() {
-    const std::string LABELS = "ui/assets/labels/";
-    std::vector<std::string> candidates = { LABELS };
+    const std::string LABEL_DIR = "ui/assets/labels/";
+    std::vector<std::string> candidates = { LABEL_DIR };
     char exePath[MAX_PATH] = {};
     if (GetModuleFileNameA(nullptr, exePath, MAX_PATH)) {
         std::string dir(exePath);
         dir = dir.substr(0, dir.find_last_of("\\/") + 1);
-        candidates.push_back(dir + LABELS);
-        candidates.push_back(dir + "../" + LABELS);
-        candidates.push_back(dir + "../../" + LABELS);
+        candidates.push_back(dir + LABEL_DIR);
+        candidates.push_back(dir + "../" + LABEL_DIR);
+        candidates.push_back(dir + "../../" + LABEL_DIR);
     }
     for (const std::string& c : candidates)
         if (fileExists(c + "hp.png")) return c;
@@ -86,7 +89,7 @@ bool initTextLabels() {
         else { std::cerr << "ERROR: missing UI image " << folder << info.id << ".png" << std::endl; ok = false; }
     }
     for (int c = 0; c < TEXT_CLASS_COUNT; c++)
-        for (int d = 0; d < 13; d++) {
+        for (int d = 0; d < DIGIT_COUNT; d++) {
             std::string path = folder + CLASS_PREFIX[c] + "_digit_" + DIGIT_NAME[d] + ".png";
             if (!loadTexture(path.c_str(), digitTextures[c][d])) {
                 std::cerr << "ERROR: missing UI image " << path << std::endl;
@@ -107,15 +110,14 @@ void showTextImagesError() {
 std::string textAssetFolder() { return folder; }
 
 // ---------- TextLine ----------
-TextLine& TextLine::label(const char* id) { if (findLabel(id)) pieces.push_back({ 0, id, 0 }); return *this; }
-TextLine& TextLine::number(const std::string& digits) { pieces.push_back({ 1, digits, 0 }); return *this; }
-TextLine& TextLine::gap(float pixels) { pieces.push_back({ 2, "", pixels }); return *this; }
+TextLine& TextLine::label(const char* id) { if (findLabel(id)) pieces.push_back({ PIECE_LABEL, id }); return *this; }
+TextLine& TextLine::number(const std::string& digits) { pieces.push_back({ PIECE_NUMBER, digits }); return *this; }
 
-static float pieceWidth(int kind, const std::string& text, float pixels, TextClass cls) {
-    if (kind == 2) return pixels;
-    if (kind == 0) return (float)labelTextures[text].width;
+// Width of one piece: a label is one image; a number is the sum of its digit images.
+float TextLine::pieceWidth(const Piece& piece) const {
+    if (piece.kind == PIECE_LABEL) return (float)labelTextures[piece.text].width;
     float w = 0;
-    for (char ch : text) { int d = digitIndex(ch); if (d >= 0) w += digitTextures[cls][d].width; }
+    for (char ch : piece.text) { int d = digitIndex(ch); if (d >= 0) w += digitTextures[cls][d].width; }
     return w;
 }
 
@@ -124,22 +126,20 @@ static float spacing(TextClass cls) { return std::round(CLASS_HEIGHT[cls] * 0.22
 float TextLine::width() const {
     float w = 0;
     for (size_t i = 0; i < pieces.size(); i++) {
-        w += pieceWidth(pieces[i].kind, pieces[i].text, pieces[i].pixels, cls);
-        if (i + 1 < pieces.size() && pieces[i].kind != 2 && pieces[i + 1].kind != 2) w += spacing(cls);
+        w += pieceWidth(pieces[i]);
+        if (i + 1 < pieces.size()) w += spacing(cls);
     }
     return w;
 }
-
-float TextLine::height() const { return CLASS_HEIGHT[cls]; }
 
 void TextLine::drawPieces(float rightX, float bottomY, float r, float g, float b, float a) const {
     float x = std::round(rightX - width()), y = std::round(bottomY);   // whole pixels: the images stay sharp
     for (size_t i = 0; i < pieces.size(); i++) {                       // the first piece is the leftmost
         const Piece& p = pieces[i];
-        if (p.kind == 0) {
+        if (p.kind == PIECE_LABEL) {
             const Texture& t = labelTextures[p.text];
             drawImage(t, x, y, (float)t.width, (float)t.height, r, g, b, a);
-        } else if (p.kind == 1) {
+        } else {
             float dx = x;
             for (char ch : p.text) {
                 int d = digitIndex(ch);
@@ -149,8 +149,8 @@ void TextLine::drawPieces(float rightX, float bottomY, float r, float g, float b
                 dx += t.width;
             }
         }
-        x += pieceWidth(p.kind, p.text, p.pixels, cls);
-        if (i + 1 < pieces.size() && p.kind != 2 && pieces[i + 1].kind != 2) x += spacing(cls);
+        x += pieceWidth(p);
+        if (i + 1 < pieces.size()) x += spacing(cls);
     }
 }
 

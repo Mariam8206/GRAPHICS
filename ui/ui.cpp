@@ -5,8 +5,6 @@
 #include "game/collectibles/coin.h"
 #include "game/game.h"
 #include "ui/text_labels.h"
-#include <string>
-#include <cstdio>
 #include <cmath>
 
 // Cards sit over the three 4-floor buildings (x 180-345, 500-680, 830-1005), which have no roof props,
@@ -14,6 +12,21 @@
 static const float CARD_X[PLAYER_TYPE_COUNT] = { 182, 512, 838 };
 static const float CARD_Y = SCREEN_HEIGHT - CARD_HEIGHT - 2;   // bottom edge of every card
 static const char* CARD_NAME_ID[PLAYER_TYPE_COUNT] = { "name_melee", "name_ranged", "name_defense" };
+static const int CARD_HEALTH[PLAYER_TYPE_COUNT] = { MELEE_HEALTH, RANGED_HEALTH, DEFENSE_HEALTH };
+
+// Layout inside a card, measured from the card's bottom-left corner (x, y).
+// Portrait panel on the left: sky with a strip of street at its bottom, the character standing on it.
+const float PORTRAIT_LEFT = 4, PORTRAIT_BOTTOM = 22, PORTRAIT_WIDTH = 54, PORTRAIT_HEIGHT = CARD_HEIGHT - 26;
+const float STREET_STRIP_HEIGHT = 10;
+// Text column on the right, right-aligned 6 px from the card's right edge. Rows (bottom of each line):
+const float TEXT_MARGIN_RIGHT = 6;
+const float NAME_ROW = 73;        // character name
+const float STATS_ROW = 57;       // "HP n" and, left of it, "DMG n" or "Blocks"
+const float COIN_ICON_ROW = 48;   // center of the small coin next to the price
+const float PRICE_ROW = 37;       // price
+const float FIELD_ROW = 21;       // "On field n"
+const float STATUS_ROW = 3;       // status strip along the bottom edge
+const float STATUS_HEIGHT = 17;
 
 int getCardAt(float x, float y) {
     for (int i = 0; i < PLAYER_TYPE_COUNT; i++)
@@ -29,77 +42,75 @@ static void drawPadlock(float x, float y) {
     drawRectangle(x - 1, y - 3, 2, 4, 0.15f, 0.15f, 0.15f);
 }
 
-static void drawCard(int i, bool hovered, float time) {
-    PlayerType type = (PlayerType)i;
-    float x = CARD_X[i], y = CARD_Y, w = CARD_WIDTH, h = CARD_HEIGHT;
-    bool locked = !isUnlocked(type);
-    bool affordable = getCoins() >= getPrice(type);
-    int count = countOnField(type);
-    bool selected = (getSelectedCard() == i);
-    bool available = !locked && affordable;
-    float textDim = available ? 1.0f : 0.6f;
+// Portrait: a small version of the real model, idling, clipped to its panel (Beram's ray gun would cover the text).
+// A card that cannot be used gets a dark overlay; a locked one also gets a padlock.
+static void drawCardPortrait(PlayerType type, float x, float y, bool locked, bool available, float time) {
+    float left = x + PORTRAIT_LEFT, bottom = y + PORTRAIT_BOTTOM;
+    float centerX = left + PORTRAIT_WIDTH / 2;
+    drawRectangle(left, bottom, PORTRAIT_WIDTH, PORTRAIT_HEIGHT, 0.72f, 0.85f, 0.93f);       // sky
+    drawRectangle(left, bottom, PORTRAIT_WIDTH, STREET_STRIP_HEIGHT, 0.40f, 0.40f, 0.42f);   // street
 
-    if (locked) setGrayscale(1);                                             // the whole card loses its color
-
-    // Frame, background and portrait panel (sky + street)
-    drawRectangle(x - 2, y - 2, w + 4, h + 4, 0.08f, 0.02f, 0.05f);
-    drawRectangle(x, y, w, h, 0.32f, 0.12f, 0.20f);
-    drawRectangle(x + 4, y + 22, 54, h - 26, 0.72f, 0.85f, 0.93f);
-    drawRectangle(x + 4, y + 22, 54, 10, 0.40f, 0.40f, 0.42f);
-
-    // Small version of the real model, idling (clipped to its panel: Beram's ray gun would cover the text)
-    setClipRect(x + 4, y + 22, 54, h - 26);
+    setClipRect(left, bottom, PORTRAIT_WIDTH, PORTRAIT_HEIGHT);
     pushMatrix();
-    translate(x + 31, y + 28);
+    translate(centerX, y + 28);                                                              // feet on the street
     scale(0.78f, 0.78f);
     if (type == PLAYER_MELEE) drawAnabMan(time, false, -1);
     else if (type == PLAYER_RANGED) drawBeram(time, false, 0);
     else drawTayseer(time, 0);
     popMatrix();
     clearClipRect();
-    if (!available) drawRectangle(x + 4, y + 22, 54, h - 26, 0.0f, 0.0f, 0.0f, 0.35f);
-    if (locked) drawPadlock(x + 31, y + 52);
 
-    // Text column right of the portrait, right-aligned:
-    // name, health + damage (or role), price, how many are on the field
-    float right = x + w - 6;
-    TextLine(TC_N).label(CARD_NAME_ID[i]).drawRight(right, y + 73, 1.0f * textDim, 0.92f * textDim, 0.70f * textDim);
+    if (!available) drawRectangle(left, bottom, PORTRAIT_WIDTH, PORTRAIT_HEIGHT, 0.0f, 0.0f, 0.0f, 0.35f);
+    if (locked) drawPadlock(centerX, y + 52);
+}
+
+// Text column, right-aligned: name, stats, price (red when it cannot be paid) and how many are on the field.
+// A card that cannot be used has dimmer text.
+static void drawCardText(PlayerType type, float x, float y, bool locked, bool affordable, bool available) {
+    float dim = available ? 1.0f : 0.6f;
+    float right = x + CARD_WIDTH - TEXT_MARGIN_RIGHT;
+
+    TextLine(TC_N).label(CARD_NAME_ID[type]).drawRight(right, y + NAME_ROW, 1.0f * dim, 0.92f * dim, 0.70f * dim);
+
     TextLine hpLine(TC_S);
-    hpLine.label("hp").number(i == PLAYER_DEFENSE ? DEFENSE_HEALTH
-                              : (i == PLAYER_RANGED ? RANGED_HEALTH : MELEE_HEALTH));
-    hpLine.drawRight(right, y + 57, 0.55f * textDim, 1.0f * textDim, 0.55f * textDim);
-    float roleRight = right - hpLine.width() - 10;
+    hpLine.label("hp").number(CARD_HEALTH[type]);
+    hpLine.drawRight(right, y + STATS_ROW, 0.55f * dim, 1.0f * dim, 0.55f * dim);
+    float roleRight = right - hpLine.width() - 10;                     // left of the HP text
     if (type == PLAYER_DEFENSE)
-        TextLine(TC_S).label("blocks").drawRight(roleRight, y + 57, 0.6f * textDim, 0.8f * textDim, 1.0f * textDim);
+        TextLine(TC_S).label("blocks").drawRight(roleRight, y + STATS_ROW, 0.6f * dim, 0.8f * dim, 1.0f * dim);
     else
         TextLine(TC_S).label("dmg").number(PLAYER_DAMAGE)
-            .drawRight(roleRight, y + 57, 1.0f * textDim, 0.6f * textDim, 0.6f * textDim);
+            .drawRight(roleRight, y + STATS_ROW, 1.0f * dim, 0.6f * dim, 0.6f * dim);
 
     pushMatrix();
-    translate(right - 7, y + 48);
+    translate(right - 7, y + COIN_ICON_ROW);
     drawAnabCoin(7);
     popMatrix();
     TextLine price(TC_N);
     price.number(getPrice(type));
-    if (affordable || locked) price.drawRight(right - 17, y + 37, 1.0f * textDim, 0.88f * textDim, 0.35f * textDim);
-    else                      price.drawRight(right - 17, y + 37, 1.0f, 0.25f, 0.25f);   // red: not enough coins
+    if (affordable || locked) price.drawRight(right - 17, y + PRICE_ROW, 1.0f * dim, 0.88f * dim, 0.35f * dim);
+    else                      price.drawRight(right - 17, y + PRICE_ROW, 1.0f, 0.25f, 0.25f);   // red: not enough coins
 
-    TextLine(TC_S).label("field").number(count)
-        .drawRight(right, y + 21, 0.85f * textDim, 0.85f * textDim, 0.85f * textDim);
+    TextLine(TC_S).label("field").number(countOnField(type))
+        .drawRight(right, y + FIELD_ROW, 0.85f * dim, 0.85f * dim, 0.85f * dim);
+}
 
-    // Status strip at the bottom: the one most important reason this card can or cannot be used
+// Status strip at the bottom: the one most important reason this card can or cannot be used
+static void drawCardStatus(PlayerType type, float x, float y, bool locked, bool affordable, bool selected) {
     TextLine status(TC_S);
-    float sr, sg, sb;
-    if (locked && isWaitingForFirstMelee()) { status.label("st_meleefirst"); sr = 0.8f; sg = 0.8f; sb = 0.8f; }
-    else if (locked)          { status.label("st_unlocks").number(getUnlockThreshold(type));
-                                sr = 0.8f; sg = 0.8f; sb = 0.8f; }
-    else if (!affordable)     { status.label("st_need").number(getPrice(type)); sr = 1.0f; sg = 0.35f; sb = 0.35f; }
-    else if (selected)        { status.label("st_click"); sr = 1.0f; sg = 0.85f; sb = 0.3f; }
-    else                      { status.label("st_ready"); sr = 0.45f; sg = 1.0f; sb = 0.5f; }
-    drawRectangle(x + 4, y + 3, w - 8, 17, 0.12f, 0.04f, 0.08f);
-    status.drawCentered(x + w / 2, y + 3, sr, sg, sb, 1, false);
+    float r, g, b;
+    if (locked && isWaitingForFirstMelee()) { status.label("st_meleefirst"); r = 0.8f; g = 0.8f; b = 0.8f; }
+    else if (locked)      { status.label("st_unlocks").number(getUnlockThreshold(type)); r = 0.8f; g = 0.8f; b = 0.8f; }
+    else if (!affordable) { status.label("st_need").number(getPrice(type)); r = 1.0f; g = 0.35f; b = 0.35f; }
+    else if (selected)    { status.label("st_click"); r = 1.0f; g = 0.85f; b = 0.3f; }
+    else                  { status.label("st_ready"); r = 0.45f; g = 1.0f; b = 0.5f; }
+    drawRectangle(x + 4, y + STATUS_ROW, CARD_WIDTH - 8, STATUS_HEIGHT, 0.12f, 0.04f, 0.08f);   // 4 px in on each side
+    status.drawCentered(x + CARD_WIDTH / 2, y + STATUS_ROW, r, g, b, 1, false);
+}
 
-    // Border: hovered (available cards only) = brighter; selected = thick pulsing gold
+// Border: hovered (usable cards only) = brighter; selected = thick gold plus a pulsing outer glow
+static void drawCardBorder(float x, float y, bool locked, bool hovered, bool available, bool selected, float time) {
+    float w = CARD_WIDTH, h = CARD_HEIGHT;
     if (hovered && available && !selected) {
         drawRectangle(x, y, w, h, 1.0f, 1.0f, 1.0f, 0.12f);
         drawRectangleOutline(x, y, w, h, 2, 1.0f, 0.95f, 0.75f);
@@ -111,6 +122,22 @@ static void drawCard(int i, bool hovered, float time) {
         drawRectangleOutline(x, y, w, h, 4, 1.0f, 0.82f, 0.15f);
         drawRectangleOutline(x - 5, y - 5, w + 10, h + 10, 3, 1.0f, 0.85f, 0.2f, 0.35f + 0.4f * pulse);
     }
+}
+
+static void drawCard(PlayerType type, bool hovered, float time) {
+    float x = CARD_X[type], y = CARD_Y;
+    bool locked = !isUnlocked(type);
+    bool affordable = getCoins() >= getPrice(type);
+    bool available = !locked && affordable;          // can be selected right now
+    bool selected = (getSelectedCard() == type);
+
+    if (locked) setGrayscale(1);                     // the whole card loses its color
+    drawRectangle(x - 2, y - 2, CARD_WIDTH + 4, CARD_HEIGHT + 4, 0.08f, 0.02f, 0.05f);   // dark frame
+    drawRectangle(x, y, CARD_WIDTH, CARD_HEIGHT, 0.32f, 0.12f, 0.20f);                   // background
+    drawCardPortrait(type, x, y, locked, available, time);
+    drawCardText(type, x, y, locked, affordable, available);
+    drawCardStatus(type, x, y, locked, affordable, selected);
+    drawCardBorder(x, y, locked, hovered, available, selected, time);
     setGrayscale(0);
 }
 
@@ -128,7 +155,7 @@ void drawTopBar(int coins, int wave, int hoveredCard, float time) {
     TextLine(TC_XL).number(coins).drawLeft(66, UI_BAR_BOTTOM + 13, 1.0f, 0.90f, 0.40f);
 
     for (int i = 0; i < PLAYER_TYPE_COUNT; i++)
-        drawCard(i, i == hoveredCard, time);
+        drawCard((PlayerType)i, i == hoveredCard, time);
 
     // Wave label (top-right): "WAVE 1 OF 3"
     TextLine(TC_XL).label("wave_label").number(wave).label("of").number(TOTAL_WAVES)

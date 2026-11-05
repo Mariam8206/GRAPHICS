@@ -13,6 +13,7 @@
 #include <string>
 
 enum EnemyType { ENEMY_EASY, ENEMY_MEDIUM, ENEMY_HARD };
+const int ENEMY_TYPE_COUNT = 3;
 enum ProjectileKind { SHOT_ANAB_ENERGY, SHOT_WEB, SHOT_BALLOT_BOX };
 
 const float MELEE_SWING_TIME = 0.6f;    // length of one swing animation (seconds)
@@ -89,6 +90,11 @@ static std::vector<FloatingText> floatingTexts;
 // unlock threshold (PDF): it locks again as soon as a purchase takes the balance below it.
 static const int PRICE[PLAYER_TYPE_COUNT] = { MELEE_PRICE, RANGED_PRICE, DEFENSE_PRICE };
 static const int UNLOCK_AT[PLAYER_TYPE_COUNT] = { MELEE_UNLOCK_AT, RANGED_UNLOCK_AT, DEFENSE_UNLOCK_AT };
+static const int PLAYER_HEALTH[PLAYER_TYPE_COUNT] = { MELEE_HEALTH, RANGED_HEALTH, DEFENSE_HEALTH };
+// Per enemy type (easy, medium, hard)
+static const int ENEMY_HEALTH[ENEMY_TYPE_COUNT] = { EASY_HEALTH, MEDIUM_HEALTH, HARD_HEALTH };
+static const float ENEMY_SPEED[ENEMY_TYPE_COUNT] = { EASY_SPEED, MEDIUM_SPEED, HARD_SPEED };   // pixels per second
+static const int ENEMY_REWARD[ENEMY_TYPE_COUNT] = { EASY_REWARD, MEDIUM_REWARD, HARD_REWARD };  // coins dropped
 static int coins = STARTING_COINS;
 static bool firstMeleePlaced = false;   // PDF: only Melee at the start; Beram and Tayseer wait for the first Anab Man
 static int selectedCard = -1;
@@ -98,6 +104,15 @@ static const char* messageId = "";               // label id of the message's ma
 static TextLine messageLine(TC_L);                // what is drawn: text labels + numbers
 static float messageTimer = 0;
 static float messageR, messageG, messageB;
+
+// How messages look (r, g, b colors; positions in screen pixels)
+const float REFUSAL_COLOR[3] = { 1.0f, 0.45f, 0.4f };   // soft red: placement refused
+const float UNLOCK_COLOR[3] = { 0.4f, 1.0f, 0.5f };     // green: a card was unlocked
+const float MESSAGE_STRIP_Y = 576;                        // bottom of the dark strip, just below the cards
+const float MESSAGE_STRIP_HEIGHT = 36;
+const float MESSAGE_TEXT_Y = MESSAGE_STRIP_Y + 2;         // bottom of the text line
+const float MESSAGE_PADDING = 14;                         // strip extends this far left and right of the text
+const float MESSAGE_FADE_TIME = 0.3f;                     // the last 0.3 s of a message fade out
 
 // Wave state
 static int currentWave = 1;
@@ -120,16 +135,36 @@ static float jumpOffset(const Player& p) {
     return sin(PI * progress) * JUMP_HEIGHT;                // up and back down
 }
 
+// How tall a player's body is above its feet: 75 px, or 38 px while ducking (Tayseer never ducks).
+static float playerBodyHeight(const Player& p) {
+    return (p.duckTimer > 0 && p.type != PLAYER_DEFENSE) ? 38.0f : 75.0f;
+}
+
 static void addHitEffect(float x, float y, float r, float g, float b) {
     HitEffect e = { x, y, 0.3f, r, g, b };
     effects.push_back(e);
 }
 
-static void showMessage(const char* id, const TextLine& line, float r, float g, float b) {
+// Adds a flying projectile. speed > 0 flies right (player shots), < 0 flies left (enemy shots).
+static void fireProjectile(ProjectileKind kind, int lane, float x, float height, float speed, int damage,
+                           bool fromPlayer) {
+    Projectile shot = {};
+    shot.kind = kind;
+    shot.lane = lane;
+    shot.x = x;
+    shot.height = height;
+    shot.speed = speed;
+    shot.damage = damage;
+    shot.fromPlayer = fromPlayer;
+    shot.alive = true;
+    projectiles.push_back(shot);
+}
+
+static void showMessage(const char* id, const TextLine& line, const float color[3]) {
     messageId = id;
     messageLine = line;
     messageTimer = MESSAGE_TIME;
-    messageR = r; messageG = g; messageB = b;
+    messageR = color[0]; messageG = color[1]; messageB = color[2];
 }
 
 // Every coin that comes in goes through here. When the balance climbs to a card's threshold, that card
@@ -141,7 +176,7 @@ static void addCoins(int amount) {
         if (before < UNLOCK_AT[t] && coins >= UNLOCK_AT[t] && isUnlocked((PlayerType)t)) {
             static const char* UNLOCKED_ID[PLAYER_TYPE_COUNT] = { nullptr, "msg_unlocked_ranged",
                                                                   "msg_unlocked_defense" };
-            showMessage(UNLOCKED_ID[t], TextLine(TC_L).label(UNLOCKED_ID[t]), 0.4f, 1.0f, 0.5f);
+            showMessage(UNLOCKED_ID[t], TextLine(TC_L).label(UNLOCKED_ID[t]), UNLOCK_COLOR);
         }
 }
 
@@ -211,7 +246,7 @@ static bool spawnEnemy(EnemyType type) {
     e.type = type;
     e.lane = lane;
     e.x = SCREEN_WIDTH - enemyHalfWidth(type) - 2;    // appears at the right edge
-    e.maxHealth = (type == ENEMY_HARD) ? HARD_HEALTH : (type == ENEMY_MEDIUM ? MEDIUM_HEALTH : EASY_HEALTH);
+    e.maxHealth = ENEMY_HEALTH[type];
     e.health = e.maxHealth;
     e.attackTimer = 0.5f;                             // starts attacking right after appearing
     e.moving = true;
@@ -222,12 +257,11 @@ static bool spawnEnemy(EnemyType type) {
 // Removes defeated units. A defeated enemy drops its coin here, in the same step that removes it, so it can
 // only drop once. The coin is kept left of the right-edge entry zone, where a waiting player can still touch it.
 static void removeDefeated() {
-    static const int REWARD[3] = { EASY_REWARD, MEDIUM_REWARD, HARD_REWARD };
     for (const Enemy& e : enemies)
         if (e.health <= 0) {
             addHitEffect(e.x, laneGround(e.lane) + 35, 1.0f, 0.85f, 0.3f);
             CoinPickup c = { std::min(e.x, SCREEN_WIDTH - ENEMY_ENTRY_ZONE), laneGround(e.lane) + 22,
-                             REWARD[e.type], 0 };
+                             ENEMY_REWARD[e.type], 0 };
             coinPickups.push_back(c);
         }
     for (const Player& p : players)
@@ -258,11 +292,19 @@ void resetGame() {
     spawnTimer = 2.0f;
 }
 
-// The checks, in order. Nothing is changed here. There is no limit on how many of a type can be on the field.
-static PlaceResult checkPlacement(PlayerType type, int lane) {
+// Can this character be bought right now? Checks only, in order; nothing is changed (no coins are taken).
+// Used both when its card is clicked and when it is placed. There is no limit on how many can be on the field.
+static PlaceResult checkPurchase(PlayerType type) {
     if (gameWon || gameLost) return PLACE_GAME_OVER;
     if (!isUnlocked(type)) return PLACE_LOCKED;
     if (coins < PRICE[type]) return PLACE_NO_COINS;
+    return PLACE_OK;
+}
+
+// Placing additionally needs a valid lane
+static PlaceResult checkPlacement(PlayerType type, int lane) {
+    PlaceResult result = checkPurchase(type);
+    if (result != PLACE_OK) return result;
     if (lane < 0 || lane >= LANE_COUNT) return PLACE_BAD_LANE;
     return PLACE_OK;
 }
@@ -276,61 +318,72 @@ static void showRefusal(PlayerType type, PlaceResult result) {
     else if (result == PLACE_LOCKED) { id = "msg_locked"; line.label(id).number(UNLOCK_AT[type]).label("msg_coins"); }
     else if (result == PLACE_NO_COINS) { id = "msg_nocoins"; line.label(id).number(PRICE[type]); }
     else return;
-    showMessage(id, line, 1.0f, 0.45f, 0.4f);
+    showMessage(id, line, REFUSAL_COLOR);
 }
 
 void clickCard(PlayerType type) {
     if (gameWon || gameLost) return;
     if (selectedCard == type) { selectedCard = -1; return; }   // second click on the same card cancels
     // A locked or unaffordable card cannot be selected. There is no waiting time between placements.
-    PlaceResult problem = PLACE_OK;
-    if (!isUnlocked(type)) problem = PLACE_LOCKED;
-    else if (coins < PRICE[type]) problem = PLACE_NO_COINS;
+    PlaceResult problem = checkPurchase(type);
     if (problem != PLACE_OK) { showRefusal(type, problem); return; }
     selectedCard = type;
 }
 
 int getSelectedCard() { return selectedCard; }
 
+static const float TAYSEER_SPACING = 2 * playerHalfWidth(PLAYER_DEFENSE) + 6;   // two bodies + a visible gap
+
+// true if another Tayseer in this lane stands closer than TAYSEER_SPACING to x
+static bool tooCloseToTayseer(int lane, float x) {
+    for (const Player& p : players)
+        if (p.type == PLAYER_DEFENSE && p.lane == lane && fabs(x - p.x) < TAYSEER_SPACING) return true;
+    return false;
+}
+
+// From x, keep stepping a new Tayseer past whatever is in the way (living enemies, other Tayseers) in direction dir
+// (-1 = toward the lab, +1 = away from it). Stepping past one body can reach the next, so it repeats until nothing
+// moves; the counter only guards against looping forever. blocked = something was still in the way at the end.
+static float stepPastBodies(int lane, float x, int dir, bool& blocked) {
+    float half = playerHalfWidth(PLAYER_DEFENSE);
+    bool moved = true;
+    for (size_t tries = 0; moved && tries <= enemies.size() + players.size(); tries++) {
+        moved = false;
+        for (const Enemy& e : enemies) {
+            if (e.lane != lane || e.health <= 0) continue;
+            float eHalf = enemyHalfWidth(e.type);
+            if (x + half > e.x - eHalf && x - half < e.x + eHalf) { x = e.x + dir * (eHalf + half); moved = true; }
+        }
+        for (const Player& p : players)
+            if (p.type == PLAYER_DEFENSE && p.lane == lane && fabs(x - p.x) < TAYSEER_SPACING) {
+                x = p.x + dir * TAYSEER_SPACING;
+                moved = true;
+            }
+    }
+    blocked = moved;
+    return x;
+}
+
 // Tayseer stands where the lane was clicked: kept inside the lane (not over the lab, not in the enemies' entry
 // zone at the right edge) and never on top of an enemy or another Tayseer - on a click over one, he stands just
 // in front of it (lab side). If the lane's left end is taken by a Tayseer, he stands just behind the Tayseers
 // instead. Returns -1 when there is no free spot in the lane.
 static float defenseSpot(int lane, float clickX) {
-    const float TAYSEER_SPACING = 2 * playerHalfWidth(PLAYER_DEFENSE) + 6;   // two bodies + a visible gap
     float half = playerHalfWidth(PLAYER_DEFENSE);
     float leftmost = BASE_WIDTH + half + 4, rightmost = SCREEN_WIDTH - ENEMY_ENTRY_ZONE - half;
-    float start = std::max(leftmost, std::min(clickX, rightmost));
-    auto onTayseer = [&](float x) {
-        for (const Player& p : players)
-            if (p.type == PLAYER_DEFENSE && p.lane == lane && fabs(x - p.x) < TAYSEER_SPACING) return true;
-        return false;
-    };
-    for (int dir = -1; dir <= 1; dir += 2) {                   // first towards the lab, then away from it
-        float x = start;
-        bool moved = true;
-        // stepping past one body can reach the next
-        for (size_t tries = 0; moved && tries <= enemies.size() + players.size(); tries++) {
-            moved = false;
-            for (const Enemy& e : enemies) {
-                if (e.lane != lane || e.health <= 0) continue;
-                float eHalf = enemyHalfWidth(e.type);
-                if (x + half > e.x - eHalf && x - half < e.x + eHalf) { x = e.x + dir * (eHalf + half); moved = true; }
-            }
-            for (const Player& p : players)
-                if (p.type == PLAYER_DEFENSE && p.lane == lane && fabs(x - p.x) < TAYSEER_SPACING) {
-                    x = p.x + dir * TAYSEER_SPACING;
-                    moved = true;
-                }
-        }
-        if (dir < 0) {
-            x = std::max(x, leftmost);                         // as before: an enemy at the lab end is not avoided
-            if (!onTayseer(x)) return x;
-        } else if (!moved && x <= rightmost) {
-            return x;
-        }
-    }
-    return -1;
+    float start = std::max(leftmost, std::min(clickX, rightmost));   // a click of -1 = the left end
+    bool blocked;
+
+    // 1) Toward the lab: stand just in front of whatever is at the click.
+    //    (As before, an enemy right at the lab end is not avoided: the game is about to be lost anyway.)
+    float x = std::max(stepPastBodies(lane, start, -1, blocked), leftmost);
+    if (!tooCloseToTayseer(lane, x)) return x;
+
+    // 2) The lab end is taken by Tayseers: stand just behind them instead
+    x = stepPastBodies(lane, start, +1, blocked);
+    if (!blocked && x <= rightmost) return x;
+
+    return -1;                                       // no free spot in this lane
 }
 
 PlaceResult tryPlacePlayer(PlayerType type, int lane, float clickX) {
@@ -347,7 +400,7 @@ PlaceResult tryPlacePlayer(PlayerType type, int lane, float clickX) {
     p.lane = lane;
     p.x = BASE_WIDTH + playerHalfWidth(type) + 4;     // leftmost position of the lane (PDF)
     if (type == PLAYER_DEFENSE) p.x = spot;
-    p.maxHealth = (type == PLAYER_MELEE) ? MELEE_HEALTH : (type == PLAYER_RANGED ? RANGED_HEALTH : DEFENSE_HEALTH);
+    p.maxHealth = PLAYER_HEALTH[type];
     p.health = p.maxHealth;
     p.attackTimer = 0.3f;                             // starts attacking right after placement
     p.moving = (type != PLAYER_DEFENSE);
@@ -385,7 +438,7 @@ static void collectCoinsTouchedByPlayers() {
         for (const Player& p : players) {
             if (p.health <= 0) continue;
             float feet = laneGround(p.lane) + jumpOffset(p);
-            float top = feet + (p.duckTimer > 0 && p.type != PLAYER_DEFENSE ? 38.0f : 75.0f);
+            float top = feet + playerBodyHeight(p);
             if (fabs(c.x - p.x) <= playerHalfWidth(p.type) + COIN_RADIUS &&
                 c.y + COIN_RADIUS >= feet && c.y - COIN_RADIUS <= top) touched = true;
         }
@@ -458,6 +511,61 @@ static void updateWaves(float dt) {
     }
 }
 
+// ----- Players -----
+// The closest living enemy in front of this player in its lane, or nullptr. gap = space between the two bodies;
+// touching = some enemy in front is within 2 px (the player stops walking).
+static Enemy* closestEnemyAhead(const Player& p, float& gap, bool& touching) {
+    float half = playerHalfWidth(p.type);
+    Enemy* closest = nullptr;
+    gap = 1e9f;
+    touching = false;
+    for (Enemy& e : enemies) {
+        if (e.lane != p.lane || e.health <= 0) continue;
+        float eHalf = enemyHalfWidth(e.type);
+        if (e.x + eHalf < p.x - half) continue;               // enemy is already behind this player
+        float g = (e.x - eHalf) - (p.x + half);               // space between the two bodies
+        if (g <= 2) touching = true;                          // they collide
+        if (g < gap) { gap = g; closest = &e; }
+    }
+    return closest;
+}
+
+// Walk right until touching an enemy or reaching the right edge (then stay there).
+// The edge stop leaves room for the widest enemy to appear in front: spawning on top of a waiting player
+// made the two overlap by 30-38 px.
+static void walkPlayer(Player& p, bool touching, float dt) {
+    float rightLimit = SCREEN_WIDTH - ENEMY_ENTRY_ZONE - playerHalfWidth(p.type);
+    p.moving = (p.type != PLAYER_DEFENSE) && !touching && (p.x < rightLimit);
+    if (p.moving) p.x = std::min(p.x + PLAYER_SPEED * dt, rightLimit);
+}
+
+// Attacks start immediately and repeat, even with no enemy around (PDF 3.1).
+// PLAYER_DEFENSE never attacks; it blocks (see updateEnemies and updateProjectiles).
+static void playerAttack(Player& p, Enemy* target, float targetGap, float dt) {
+    if (p.type == PLAYER_MELEE) {
+        p.attackTimer -= dt;
+        if (p.attackTimer <= 0) {
+            p.attackTimer = MELEE_ATTACK_INTERVAL;
+            p.attackAnim = MELEE_SWING_TIME;
+            p.damageDone = false;
+        }
+        // the hit lands in the middle of the swing, only if an enemy is within reach
+        if (p.attackAnim > 0 && p.attackAnim <= MELEE_SWING_TIME / 2 && !p.damageDone) {
+            p.damageDone = true;
+            if (target && targetGap <= MELEE_REACH) hurtEnemy(*target, PLAYER_DAMAGE);
+        }
+    } else if (p.type == PLAYER_RANGED) {
+        p.attackTimer -= dt;
+        if (p.attackTimer <= 0) {
+            p.attackTimer = RANGED_ATTACK_INTERVAL;
+            p.attackAnim = FIRE_ANIM_TIME;
+            float shotHeight = (p.duckTimer > 0 ? 25.0f : 44.0f) + jumpOffset(p);   // from the gun
+            fireProjectile(SHOT_ANAB_ENERGY, p.lane, p.x + playerHalfWidth(p.type) + 10, shotHeight,
+                           PROJECTILE_SPEED, PLAYER_DAMAGE, true);
+        }
+    }
+}
+
 // Players: walk right until they meet an enemy or the right edge, and attack on their own timers.
 static void updatePlayers(float dt) {
     for (Player& p : players) {
@@ -467,58 +575,67 @@ static void updatePlayers(float dt) {
         if (p.jumpTimer > 0) p.jumpTimer -= dt;
         if (p.duckTimer > 0) p.duckTimer -= dt;
 
-        // Find the closest enemy in front of this player, in the same lane
-        float half = playerHalfWidth(p.type);
-        Enemy* target = nullptr;
-        float targetGap = 1e9f;
-        bool touching = false;
-        for (Enemy& e : enemies) {
-            if (e.lane != p.lane || e.health <= 0) continue;
-            float eHalf = enemyHalfWidth(e.type);
-            if (e.x + eHalf < p.x - half) continue;               // enemy is already behind this player
-            float gap = (e.x - eHalf) - (p.x + half);             // space between the two bodies
-            if (gap <= 2) touching = true;                        // they collide
-            if (gap < targetGap) { targetGap = gap; target = &e; }
-        }
+        float targetGap;
+        bool touching;
+        Enemy* target = closestEnemyAhead(p, targetGap, touching);
+        walkPlayer(p, touching, dt);
+        playerAttack(p, target, targetGap, dt);
+    }
+}
 
-        // Movement: walk right until touching an enemy or reaching the right edge (then stay there).
-        // The edge stop leaves room for the widest enemy to appear in front: spawning on top of a waiting player
-        // made the two overlap by 30-38 px.
-        float rightLimit = SCREEN_WIDTH - ENEMY_ENTRY_ZONE - half;
-        p.moving = (p.type != PLAYER_DEFENSE) && !touching && (p.x < rightLimit);
-        if (p.moving) p.x = std::min(p.x + PLAYER_SPEED * dt, rightLimit);
+// ----- Enemies -----
+// The FRONT-most living player within reach of this enemy (nullptr if none). A Defense player standing in front
+// is reached first, so players behind it are protected. touching = some player is within 2 px (it stops).
+static Player* frontPlayerInReach(const Enemy& e, bool& touching) {
+    float half = enemyHalfWidth(e.type);
+    Player* target = nullptr;
+    touching = false;
+    for (Player& p : players) {
+        if (p.lane != e.lane || p.health <= 0) continue;
+        float pHalf = playerHalfWidth(p.type);
+        if (p.x - pHalf > e.x + half) continue;               // player already behind this enemy
+        float gap = (e.x - half) - (p.x + pHalf);
+        if (gap <= 2) touching = true;
+        if (gap <= MELEE_REACH && (!target || p.x > target->x)) target = &p;
+    }
+    return target;
+}
 
-        // Attacks start immediately and repeat, even with no enemy around (PDF 3.1)
-        if (p.type == PLAYER_MELEE) {
-            p.attackTimer -= dt;
-            if (p.attackTimer <= 0) {
-                p.attackTimer = MELEE_ATTACK_INTERVAL;
-                p.attackAnim = MELEE_SWING_TIME;
-                p.damageDone = false;
-            }
-            // the hit lands in the middle of the swing, only if an enemy is within reach
-            if (p.attackAnim > 0 && p.attackAnim <= MELEE_SWING_TIME / 2 && !p.damageDone) {
-                p.damageDone = true;
-                if (target && targetGap <= MELEE_REACH) hurtEnemy(*target, PLAYER_DAMAGE);
-            }
-        } else if (p.type == PLAYER_RANGED) {
-            p.attackTimer -= dt;
-            if (p.attackTimer <= 0) {
-                p.attackTimer = RANGED_ATTACK_INTERVAL;
-                p.attackAnim = FIRE_ANIM_TIME;
-                Projectile shot = {};
-                shot.kind = SHOT_ANAB_ENERGY;
-                shot.lane = p.lane;
-                shot.x = p.x + half + 10;
-                shot.height = (p.duckTimer > 0 ? 25.0f : 44.0f) + jumpOffset(p);
-                shot.speed = PROJECTILE_SPEED;
-                shot.damage = PLAYER_DAMAGE;
-                shot.fromPlayer = true;
-                shot.alive = true;
-                projectiles.push_back(shot);
-            }
+// How far this enemy may walk before it gets closer than ENEMY_QUEUE_GAP to the closest living enemy ahead of it
+// in its lane (1e9 = nobody ahead). Same x: the one earlier in the list counts as ahead, so two can never walk merged.
+// e must be the enemy inside the enemies list (its address decides "earlier in the list").
+static float roomToEnemyAhead(const Enemy& e) {
+    float half = enemyHalfWidth(e.type);
+    float room = 1e9f;
+    for (const Enemy& other : enemies) {
+        if (&other == &e || other.lane != e.lane || other.health <= 0) continue;
+        if (other.x > e.x || (other.x == e.x && &other > &e)) continue;   // behind this enemy
+        float gap = (e.x - half) - (other.x + enemyHalfWidth(other.type));
+        room = std::min(room, gap - ENEMY_QUEUE_GAP);
+    }
+    return room;
+}
+
+// Attacks on the enemy's own timer: Spider-Man and Sareeh shoot every interval; Abla Thalma hits the target
+// with her slipper in the middle of her swing (2 damage).
+static void enemyAttack(Enemy& e, Player* target, float dt) {
+    float half = enemyHalfWidth(e.type);
+    e.attackTimer -= dt;
+    if (e.attackTimer <= 0) {
+        e.attackTimer = ENEMY_ATTACK_INTERVAL;
+        e.attackAnim = MELEE_SWING_TIME;
+        e.damageDone = false;
+        if (e.type != ENEMY_HARD) {                             // ranged enemies shoot every interval
+            if (e.type == ENEMY_EASY)       // Spider-Man: a web from above
+                fireProjectile(SHOT_WEB, e.lane, e.x - half - 6, 95.0f, -PROJECTILE_SPEED, ENEMY_DAMAGE, false);
+            else                            // Sareeh: a ballot box along the ground
+                fireProjectile(SHOT_BALLOT_BOX, e.lane, e.x - half - 6, 8.0f, -PROJECTILE_SPEED, ENEMY_DAMAGE,
+                               false);
         }
-        // PLAYER_DEFENSE: no attack; it blocks (see updateEnemies and updateProjectiles)
+    }
+    if (e.type == ENEMY_HARD && e.attackAnim > 0 && e.attackAnim <= MELEE_SWING_TIME / 2 && !e.damageDone) {
+        e.damageDone = true;
+        if (target) hurtPlayer(*target, HARD_ENEMY_DAMAGE);
     }
 }
 
@@ -530,108 +647,84 @@ static void updateEnemies(float dt) {
         e.hitFlash -= dt;
         e.attackAnim -= dt;
 
-        // Find the FRONT-most player touching this enemy. A Defense player standing in front
-        // is reached first, so players behind it are protected.
-        float half = enemyHalfWidth(e.type);
-        Player* target = nullptr;
-        bool touching = false;
-        for (Player& p : players) {
-            if (p.lane != e.lane || p.health <= 0) continue;
-            float pHalf = playerHalfWidth(p.type);
-            if (p.x - pHalf > e.x + half) continue;               // player already behind this enemy
-            float gap = (e.x - half) - (p.x + pHalf);
-            if (gap <= 2) touching = true;
-            if (gap <= MELEE_REACH && (!target || p.x > target->x)) target = &p;
-        }
-
-        // Queue behind the closest living enemy ahead in this lane: never step closer than ENEMY_QUEUE_GAP.
-        // (Same x: the one earlier in the list counts as ahead, so two can never walk merged.)
-        float room = 1e9f;
-        for (const Enemy& other : enemies) {
-            if (&other == &e || other.lane != e.lane || other.health <= 0) continue;
-            if (other.x > e.x || (other.x == e.x && &other > &e)) continue;   // behind this enemy
-            float gap = (e.x - half) - (other.x + enemyHalfWidth(other.type));
-            room = std::min(room, gap - ENEMY_QUEUE_GAP);
-        }
-        float speed = (e.type == ENEMY_HARD) ? HARD_SPEED : (e.type == ENEMY_MEDIUM ? MEDIUM_SPEED : EASY_SPEED);
-        float stepX = touching ? 0.0f : std::max(0.0f, std::min(speed * dt, room));
+        bool touching;
+        Player* target = frontPlayerInReach(e, touching);
+        float room = roomToEnemyAhead(e);
+        float stepX = touching ? 0.0f : std::max(0.0f, std::min(ENEMY_SPEED[e.type] * dt, room));
         e.moving = stepX > 0;
         e.x -= stepX;
 
         // Lose: one enemy reaching the home base is enough
-        if (e.x - half <= BASE_WIDTH) { gameLost = true; break; }
+        if (e.x - enemyHalfWidth(e.type) <= BASE_WIDTH) { gameLost = true; break; }
 
-        e.attackTimer -= dt;
-        if (e.attackTimer <= 0) {
-            e.attackTimer = ENEMY_ATTACK_INTERVAL;
-            e.attackAnim = MELEE_SWING_TIME;
-            e.damageDone = false;
-            if (e.type != ENEMY_HARD) {                             // ranged enemies shoot every interval
-                Projectile shot = {};
-                shot.kind = (e.type == ENEMY_EASY) ? SHOT_WEB : SHOT_BALLOT_BOX;
-                shot.lane = e.lane;
-                shot.x = e.x - half - 6;
-                shot.height = (e.type == ENEMY_EASY) ? 95.0f : 8.0f;   // web from above / box along the ground
-                shot.speed = -PROJECTILE_SPEED;
-                shot.damage = ENEMY_DAMAGE;
-                shot.fromPlayer = false;
-                shot.alive = true;
-                projectiles.push_back(shot);
-            }
-        }
-        // Hard enemy: close-range slipper hit in the middle of its swing, 2 damage
-        if (e.type == ENEMY_HARD && e.attackAnim > 0 && e.attackAnim <= MELEE_SWING_TIME / 2 && !e.damageDone) {
-            e.damageDone = true;
-            if (target) hurtPlayer(*target, HARD_ENEMY_DAMAGE);
-        }
+        enemyAttack(e, target, dt);
     }
+}
+
+// ----- Projectiles -----
+// Moves the shot one frame. pathLeft..pathRight = the stretch it flew this frame (used for hits).
+static void moveProjectile(Projectile& shot, float dt, float& pathLeft, float& pathRight) {
+    float from = shot.x;
+    float step = shot.speed * dt;
+    shot.x += step;
+    shot.distance += fabs(step);
+    pathLeft = std::min(from, shot.x);
+    pathRight = std::max(from, shot.x);
+    if (shot.kind == SHOT_WEB)                              // comes down from above, then flies at head height
+        shot.height = std::max(50.0f, 95.0f - shot.distance * 0.35f);
+}
+
+// A player shot hits the first living enemy on its path (moving right), or nothing (nullptr)
+static Enemy* firstEnemyOnPath(const Projectile& shot, float pathLeft, float pathRight) {
+    Enemy* hit = nullptr;
+    for (Enemy& e : enemies) {
+        if (e.lane != shot.lane || e.health <= 0) continue;
+        float eHalf = enemyHalfWidth(e.type);
+        if (pathRight > e.x - eHalf && pathLeft < e.x + eHalf
+            && (!hit || e.x - eHalf < hit->x - enemyHalfWidth(hit->type)))
+            hit = &e;
+    }
+    return hit;
+}
+
+// An enemy shot hits the front-most living player that is in the way at the shot's height, or nothing (nullptr)
+static Player* frontPlayerInTheWay(const Projectile& shot, float pathLeft, float pathRight) {
+    Player* hit = nullptr;
+    for (Player& p : players) {
+        if (p.lane != shot.lane || p.health <= 0) continue;
+        float pHalf = playerHalfWidth(p.type);
+        if (pathRight < p.x - pHalf || pathLeft > p.x + pHalf) continue;   // not on its path
+        bool inTheWay;
+        if (p.type == PLAYER_DEFENSE) {
+            inTheWay = true;                            // the shield blocks high and low attacks
+        } else {
+            float feet = jumpOffset(p);
+            float top = feet + playerBodyHeight(p);
+            inTheWay = (shot.height + 6 >= feet) && (shot.height - 6 <= top);
+            // jumping lifts the feet over a low box; ducking lowers the head under a web
+        }
+        if (inTheWay && (!hit || p.x > hit->x)) hit = &p;
+    }
+    return hit;
 }
 
 // Projectiles: move, then hit the first body on the path flown this frame (from -> to), so a fast shot
 // at a low frame rate cannot jump over a body between two frames.
 static void updateProjectiles(float dt) {
     for (Projectile& shot : projectiles) {
-        float from = shot.x;
-        float step = shot.speed * dt;
-        shot.x += step;
-        shot.distance += fabs(step);
-        float pathLeft = std::min(from, shot.x), pathRight = std::max(from, shot.x);
-        if (shot.kind == SHOT_WEB)                              // comes down from above, then flies at head height
-            shot.height = std::max(50.0f, 95.0f - shot.distance * 0.35f);
+        float pathLeft, pathRight;
+        moveProjectile(shot, dt, pathLeft, pathRight);
 
         if (shot.fromPlayer) {
-            Enemy* hit = nullptr;                               // first enemy on its path (moving right)
-            for (Enemy& e : enemies) {
-                if (e.lane != shot.lane || e.health <= 0) continue;
-                float eHalf = enemyHalfWidth(e.type);
-                if (pathRight > e.x - eHalf && pathLeft < e.x + eHalf
-                    && (!hit || e.x - eHalf < hit->x - enemyHalfWidth(hit->type)))
-                    hit = &e;
-            }
+            // player shots never check players, so they can never harm a player (PDF)
+            Enemy* hit = firstEnemyOnPath(shot, pathLeft, pathRight);
             if (hit) {
                 hurtEnemy(*hit, shot.damage);
                 shot.alive = false;                             // disappears on collision
             }
             if (shot.x > SCREEN_WIDTH + 20) shot.alive = false;
-            // player shots never check players, so they can never harm a player (PDF)
         } else {
-            // Which player does it hit? The front-most one that is in the way at this height.
-            Player* hit = nullptr;
-            for (Player& p : players) {
-                if (p.lane != shot.lane || p.health <= 0) continue;
-                float pHalf = playerHalfWidth(p.type);
-                if (pathRight < p.x - pHalf || pathLeft > p.x + pHalf) continue;   // not on its path
-                bool inTheWay;
-                if (p.type == PLAYER_DEFENSE) {
-                    inTheWay = true;                            // the shield blocks high and low attacks
-                } else {
-                    float feet = jumpOffset(p);
-                    float top = feet + (p.duckTimer > 0 ? 38.0f : 75.0f);
-                    inTheWay = (shot.height + 6 >= feet) && (shot.height - 6 <= top);
-                    // jumping lifts the feet over a low box; ducking lowers the head under a web
-                }
-                if (inTheWay && (!hit || p.x > hit->x)) hit = &p;
-            }
+            Player* hit = frontPlayerInTheWay(shot, pathLeft, pathRight);
             if (hit) {
                 hurtPlayer(*hit, shot.damage);
                 shot.alive = false;
@@ -704,7 +797,7 @@ static void drawHealthBar(float centerX, float y, int health, int maxHealth, boo
     TextLine(TC_S).outlined().number(health).drawLeft(left + width + 5, y - 5, 1.0f, 1.0f, 1.0f);
 }
 
-static void drawPlayerUnit(const Player& p, float time) {
+static void drawPlayerUnit(const Player& p) {
     float ground = laneGround(p.lane);
     float lift = jumpOffset(p);
     drawEllipse(p.x, ground, 16 - lift * 0.1f, 4, 0, 0, 0, 0.3f);           // shadow stays on the ground
@@ -725,7 +818,7 @@ static void drawPlayerUnit(const Player& p, float time) {
     popMatrix();
 }
 
-static void drawEnemyUnit(const Enemy& e, float time) {
+static void drawEnemyUnit(const Enemy& e) {
     float ground = laneGround(e.lane);
     drawEllipse(e.x, ground, 16, 4, 0, 0, 0, 0.3f);
     pushMatrix();
@@ -776,8 +869,8 @@ static float keepBarOnScreen(float x, int maxHealth) {
 void drawGame(float time) {
     // Back lanes first, so characters in lower (closer) lanes overlap the ones above them
     for (int lane = LANE_COUNT - 1; lane >= 0; lane--) {
-        for (const Player& p : players) if (p.lane == lane) drawPlayerUnit(p, time);
-        for (const Enemy& e : enemies) if (e.lane == lane) drawEnemyUnit(e, time);
+        for (const Player& p : players) if (p.lane == lane) drawPlayerUnit(p);
+        for (const Enemy& e : enemies) if (e.lane == lane) drawEnemyUnit(e);
         for (const Projectile& shot : projectiles) {
             if (shot.lane != lane) continue;
             pushMatrix();
@@ -820,17 +913,17 @@ void drawGame(float time) {
 
     // Placement / unlock message, on a dark strip just below the cards
     if (messageTimer > 0) {
-        float alpha = messageTimer < 0.3f ? messageTimer / 0.3f : 1.0f;   // fades out at the end
+        float alpha = messageTimer < MESSAGE_FADE_TIME ? messageTimer / MESSAGE_FADE_TIME : 1.0f;
         float width = messageLine.width();
-        drawRectangle((SCREEN_WIDTH - width) / 2 - 14, 576, width + 28, 36, 0.05f, 0.03f, 0.05f, 0.75f * alpha);
-        messageLine.drawCentered(SCREEN_WIDTH / 2.0f, 578, messageR, messageG, messageB, alpha);
+        drawRectangle((SCREEN_WIDTH - width) / 2 - MESSAGE_PADDING, MESSAGE_STRIP_Y, width + 2 * MESSAGE_PADDING,
+                      MESSAGE_STRIP_HEIGHT, 0.05f, 0.03f, 0.05f, 0.75f * alpha);   // dark, 75 % opaque
+        messageLine.drawCentered(SCREEN_WIDTH / 2.0f, MESSAGE_TEXT_Y, messageR, messageG, messageB, alpha);
     }
 
-    // Wave banners (the win/lose banner is part of the win/lose menu, screens.cpp)
+    // Wave banners, only while the game is running (the win/lose banner is part of the win/lose menu, screens.cpp)
+    if (gameWon || gameLost) return;
     float center = SCREEN_WIDTH / 2.0f;
-    if (gameWon || gameLost) {
-        // nothing here
-    } else if (bannerTimer > 0) {
+    if (bannerTimer > 0) {
         TextLine(TC_XXL).label("ban_wave").number(currentWave).drawCentered(center, 290, 1.0f, 0.85f, 0.3f);
     } else if (waveBreakTimer > 0) {
         TextLine(TC_XXL).label("ban_cleared").drawCentered(center, 290, 0.5f, 1.0f, 0.6f);
