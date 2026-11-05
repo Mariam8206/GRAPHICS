@@ -2,6 +2,7 @@
 // UI text. Every label is a PNG made by ui/assets/labels/make_labels.ps1 (white text, Dubai Bold), drawn tinted.
 // Numbers are drawn with digit images. The game needs the folder ui/assets/labels: without it, it shows an error
 // and stops.
+// Why images: OpenGL 3.3 core cannot draw text by itself, and pre-rendered PNGs need no font library at run time.
 #include <string>
 #include <vector>
 
@@ -38,5 +39,5 @@ private:
     void drawPieces(float rightX, float bottomY, float r, float g, float b, float a) const;
 };
 
-// Single label drawn at its native size; (x, y) = bottom-left. Used for signs inside transformed models.
+// Single label scaled to "height" (aspect ratio kept); (x, y) = bottom-left. Used for signs inside transformed models.
 void drawLabelAt(const char* id, float x, float y, float height, float r, float g, float b, float a = 1);

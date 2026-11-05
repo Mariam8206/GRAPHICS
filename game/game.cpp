@@ -197,7 +197,7 @@ static void hurtEnemy(Enemy& e, int damage) {
 }
 
 // ===================== Waves =====================
-// Approved wave table: easy / medium / hard per wave (PDF minimums: 3, 5, 10).
+// Enemies per wave: easy / medium / hard (PDF minimums: 3, 5, 10).
 static const int WAVE_TABLE[TOTAL_WAVES][3] = {
     { 3, 0, 0 },
     { 3, 2, 0 },
@@ -531,8 +531,8 @@ static Enemy* closestEnemyAhead(const Player& p, float& gap, bool& touching) {
 }
 
 // Walk right until touching an enemy or reaching the right edge (then stay there).
-// The edge stop leaves room for the widest enemy to appear in front: spawning on top of a waiting player
-// made the two overlap by 30-38 px.
+// The edge stop leaves room for the widest enemy to appear in front, so a new enemy never spawns on top of
+// a waiting player.
 static void walkPlayer(Player& p, bool touching, float dt) {
     float rightLimit = SCREEN_WIDTH - ENEMY_ENTRY_ZONE - playerHalfWidth(p.type);
     p.moving = (p.type != PLAYER_DEFENSE) && !touching && (p.x < rightLimit);

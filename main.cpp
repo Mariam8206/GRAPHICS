@@ -94,7 +94,7 @@ static void drawScreen(const App& app, const FrameInput& input, int hoveredLane,
         drawCutscene();
     } else {
         drawEnvironment(time);          // sky, Egyptian street, 4 lanes
-        drawLaboratory(time);           // home base on the far left
+        drawLaboratory(time);
         if (app.screen != SCREEN_MAIN_MENU) {
             drawLaneHighlights(hoveredLane);
             drawGame(time);             // characters, projectiles, health bars, wave banners
@@ -102,7 +102,6 @@ static void drawScreen(const App& app, const FrameInput& input, int hoveredLane,
             TextLine(TC_M).label("hint")
                 .drawCentered((BASE_WIDTH + SCREEN_WIDTH) / 2, 4, 0.15f, 0.15f, 0.15f, 1, false);
         }
-        // main / pause / win-lose menu
         drawMenus(app.screen, isGameWon(), isGameLost(), input.mouseX, input.mouseY, time);
     }
 }

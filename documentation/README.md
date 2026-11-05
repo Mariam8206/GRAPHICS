@@ -27,7 +27,7 @@ Every folder holds one part of the game: its code, its headers and its own asset
 | `game/` | Game rules: placement and coins, waves, combat, projectiles, win/lose (`game.cpp`); `collectibles/` = the coin model |
 | `renderer/` | OpenGL: shader, VAO/VBO, shapes, GLM transformations and orthographic projection, textures |
 | `libraries/` | ALL third-party code, one folder per library: `GLFW/` (window and input), `GLAD/` (OpenGL loader, with KHR), `GLM/` (matrices), `stb_image/` (PNG loading). Licenses are inside the files (GLM: `copying.txt`); see `CREDITS.md` |
-| `documentation/` | This file, `CREDITS.md`, `REQUIREMENTS.md` |
+| `documentation/` | This file, `CREDITS.md`, `REQUIREMENTS.md`, `TEAM_GUIDE.md` (how the code works, for the team) |
 
 ### Why all text images are in `ui/assets/labels/`
 

@@ -19,7 +19,8 @@ All third-party code is in `libraries/`, one folder per library. Everything outs
 - The UI text images in `ui/assets/labels/` were made by our script `ui/assets/labels/make_labels.ps1`, using the **Dubai** font
   that ships with Windows. The font file itself is not part of the project.
 - All characters, the laboratory, the street and the coins are drawn by our own code from OpenGL shapes
-  (`characters.cpp`, `environment.cpp`). No image files are used for them.
+  (`players/`, `enemies/`, `shared/character_parts`, `environment/`, `game/collectibles/coin`). No image files are used
+  for them.
 
 ## Course material and references
 

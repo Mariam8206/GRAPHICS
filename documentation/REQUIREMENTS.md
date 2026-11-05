@@ -259,3 +259,14 @@ Files moved into feature folders (see `documentation/README.md` for the map). Pa
 ## Third-party libraries in one folder (2026-11-04)
 
 `include/`, `External/`, `lib/` and `src/` were merged into `libraries/` (one folder per library: `GLFW/`, `GLAD/` incl. KHR, `GLM/`, `stb_image/`), with each library's inner folders unchanged, so no `#include` line changed. All 190 files were copied, checked byte-identical, built against, and only then removed from the old folders. The project's include and library folders point at `libraries/` in all four configurations; `glad.c` is still compiled as C. `.gitignore` keeps ignoring `*.lib` except `libraries/GLFW/lib/glfw3.lib`. Win32 Debug/Release still fail to link exactly as before the move (no 32-bit GLFW in the project; they never linked GLFW).
+
+## History notes moved out of the code comments (2026-11-05)
+
+These explanations used to sit in source comments. The rules themselves are unchanged and still described in the code; only the history was moved here.
+
+- **Lane count (`config.h`, `LANE_COUNT`):** the PDF asks for at least 3 lanes; the team approved 4.
+- **Enemy attack interval (`config.h`, `ENEMY_ATTACK_INTERVAL`):** raised from 2.0 s to 3.0 s to make the game easier.
+- **Tuning values (`config.h`, `PLAYER_SPEED` to `JUMP_HEIGHT`):** these were not in the team's original tuning table; they were chosen during development by playing.
+- **Economy values (`config.h`):** the section was marked as waiting for TA confirmation; the values are now settled (see Current rules).
+- **Wave table (`game.cpp`, `WAVE_TABLE`):** 3-0-0, 3-2-0, 4-3-3 is the table the team approved.
+- **Right-edge stop (`game.cpp`, `walkPlayer`):** players stop `ENEMY_ENTRY_ZONE` before the right edge because an enemy spawning on top of a waiting player used to overlap it by 30-38 px.

@@ -4,12 +4,12 @@
 #include <iostream>
 #include <cmath>
 #include <vector>
-#include <glm/glm.hpp>                    // matrices, as in Lab 3 and Lab 4 (include/glm: only the headers we use)
+#include <glm/glm.hpp>                    // matrices, as in Lab 3 and Lab 4
 #include <glm/gtc/matrix_transform.hpp>   // glm::translate, glm::rotate, glm::scale, glm::ortho
 #include <glm/gtc/type_ptr.hpp>           // glm::value_ptr: a matrix as 16 floats for glUniformMatrix4fv
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_ONLY_PNG
-#include "stb_image.h"        // public-domain PNG loader (include/stb_image.h, v2.30), used for the UI text images
+#include "stb_image.h"        // public-domain PNG loader, used for the UI text images
 
 // ===================== Shaders =====================
 static const char* vertexShaderSource = R"(
@@ -27,6 +27,8 @@ void main()
 }
 )";
 
+// Damage tint: mixing toward red (not multiplying) also reddens black and dark parts; alpha is not touched, so the
+// shape stays the same. Grayscale is applied after the tint, so anything drawn with uGrayscale = 1 ends up fully gray.
 static const char* fragmentShaderSource = R"(
 #version 330 core
 in vec2 vUV;
@@ -48,15 +50,15 @@ void main()
 }
 )";
 
-// --- GPU objects, created once in initRenderer(). "static" = only visible inside this file. ---
+// --- GPU objects, created once in initRenderer(). The *Location values are the shader uniform locations. ---
 static GLuint shaderProgram;
 static GLuint VAO, VBO;
-static GLint colorLocation;       // where uColor lives inside shaderProgram
-static GLint modelLocation;       // where uModel lives
-static GLint projectionLocation;  // where uProjection lives
-static GLint damageTintLocation;  // where uDamageTint lives
-static GLint grayscaleLocation;   // where uGrayscale lives
-static GLint useTextureLocation;  // where uUseTexture lives
+static GLint colorLocation;
+static GLint modelLocation;
+static GLint projectionLocation;
+static GLint damageTintLocation;
+static GLint grayscaleLocation;
+static GLint useTextureLocation;
 static GLuint imageVAO, imageVBO; // images: 4 floats per corner (x, y, u, v)
 
 static GLuint compileShader(GLenum type, const char* source) {
@@ -82,8 +84,8 @@ static GLuint compileShader(GLenum type, const char* source) {
 static glm::mat4 currentModel = glm::mat4(1.0f);
 static std::vector<glm::mat4> matrixStack;
 
-void pushMatrix() { matrixStack.push_back(currentModel); }                       // save
-void popMatrix()  { currentModel = matrixStack.back(); matrixStack.pop_back(); } // restore
+void pushMatrix() { matrixStack.push_back(currentModel); }
+void popMatrix()  { currentModel = matrixStack.back(); matrixStack.pop_back(); }
 
 // glm multiplies each new matrix on the RIGHT (currentModel * T), so the call written LAST acts on the shape FIRST.
 void translate(float tx, float ty) { currentModel = glm::translate(currentModel, glm::vec3(tx, ty, 0.0f)); }
@@ -161,7 +163,7 @@ void beginFrame() {
     glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
     currentModel = glm::mat4(1.0f);    // start every frame with "no transformation"
     matrixStack.clear();
-    setDamageTint(0);                  // and with normal colors
+    setDamageTint(0);                  // and with normal colors (a missed reset cannot leak into the next frame)
     setGrayscale(0);
 }
 
@@ -326,6 +328,8 @@ void setClipRect(float x, float y, float width, float height) {
 void clearClipRect() { glDisable(GL_SCISSOR_TEST); }
 
 // Damage feedback: everything drawn after this call is pushed toward red by "amount" (0..1).
+// A shader switch instead of a color argument: one call tints a whole character made of many shapes, and the
+// model drawing functions stay unchanged. Callers set it back to 0 when the character is done.
 void setDamageTint(float amount) {
     if (amount < 0) amount = 0;
     if (amount > 1) amount = 1;
@@ -333,6 +337,7 @@ void setDamageTint(float amount) {
 }
 
 // Locked cards: everything drawn after this call loses its color by "amount" (0..1).
+// Same idea as setDamageTint: one call grays the whole card (frame, portrait, text images) at once.
 void setGrayscale(float amount) {
     if (amount < 0) amount = 0;
     if (amount > 1) amount = 1;

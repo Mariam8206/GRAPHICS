@@ -31,7 +31,7 @@ static const LabelInfo LABELS[] = {
     { "cs_title", TC_XXL }, { "cs_skip", TC_S },
 };
 static const char* CLASS_PREFIX[TEXT_CLASS_COUNT] = { "xs", "s", "m", "n", "l", "xl", "xxl", "btn" };
-// = image heights (make_labels.ps1)
+// = image heights set in make_labels.ps1 (keep both in sync); used here only for the gap between pieces
 static const float CLASS_HEIGHT[TEXT_CLASS_COUNT] = { 14, 17, 22, 23, 33, 32, 83, 43 };
 // Digit images per size class: 0-9, then "/", "+" and "." (digitIndex() below uses this order)
 static const int DIGIT_COUNT = 13;
@@ -110,10 +110,12 @@ void showTextImagesError() {
 std::string textAssetFolder() { return folder; }
 
 // ---------- TextLine ----------
+// Numbers change while playing (coins, health), so they cannot be one pre-rendered image: each digit is its own.
 TextLine& TextLine::label(const char* id) { if (findLabel(id)) pieces.push_back({ PIECE_LABEL, id }); return *this; }
 TextLine& TextLine::number(const std::string& digits) { pieces.push_back({ PIECE_NUMBER, digits }); return *this; }
 
 // Width of one piece: a label is one image; a number is the sum of its digit images.
+// make_labels.ps1 crops every image to its own ink horizontally, so these widths are exact: no font metrics needed.
 float TextLine::pieceWidth(const Piece& piece) const {
     if (piece.kind == PIECE_LABEL) return (float)labelTextures[piece.text].width;
     float w = 0;
@@ -121,6 +123,8 @@ float TextLine::pieceWidth(const Piece& piece) const {
     return w;
 }
 
+// The images have no side margin (see above), so the gap between pieces is added here. It grows with the class
+// height, so a line looks equally spaced at every text size.
 static float spacing(TextClass cls) { return std::round(CLASS_HEIGHT[cls] * 0.22f); }   // between two pieces
 
 float TextLine::width() const {

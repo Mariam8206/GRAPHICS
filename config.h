@@ -7,7 +7,7 @@ const int SCREEN_HEIGHT = 720;
 const float PI = 3.14159265f;
 
 // --- Playfield layout ---
-const int LANE_COUNT = 4;                                        // the PDF needs at least 3 lanes; team approved 4
+const int LANE_COUNT = 4;                                        // the PDF needs at least 3 lanes
 const float LANE_HEIGHT = 110.0f;
 // y where the lowest lane starts (front sidewalk below)
 const float FIELD_BOTTOM = 30.0f;
@@ -23,7 +23,7 @@ const float CARD_HEIGHT = 96.0f;
 
 const int TOTAL_WAVES = 3;
 
-// ===================== Economy (team values, waiting for TA confirmation) =====================
+// ===================== Economy (team values) =====================
 const int STARTING_COINS = 30;
 // Buying price: paid for EVERY successful placement.
 const int MELEE_PRICE = 10;
@@ -59,11 +59,11 @@ const int HARD_ENEMY_DAMAGE = 2;   // hard melee enemy
 const float EASY_SPEED = 0.04f * SCREEN_WIDTH;
 const float MEDIUM_SPEED = 0.05f * SCREEN_WIDTH;
 const float HARD_SPEED = 0.06f * SCREEN_WIDTH;           // "runs"
-const float ENEMY_ATTACK_INTERVAL = 3.0f;                // seconds between enemy attacks (easier: was 2.0)
+const float ENEMY_ATTACK_INTERVAL = 3.0f;                // seconds between enemy attacks
 const float PROJECTILE_SPEED = 0.45f * SCREEN_WIDTH;
 const float JUMP_DURATION = 0.6f;
 const float DUCK_DURATION = 0.6f;
-// Not in the team table; chosen during development (adjust by playing):
+// More tuning values (adjust by playing):
 const float PLAYER_SPEED = 0.07f * SCREEN_WIDTH;         // walking speed of melee and ranged players
 const float MELEE_ATTACK_INTERVAL = 0.7f;                // must stay longer than MELEE_SWING_TIME (game.cpp)
 const float RANGED_ATTACK_INTERVAL = 1.0f;
