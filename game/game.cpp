@@ -89,14 +89,12 @@ static std::vector<FloatingText> floatingTexts;
 // unlock threshold (PDF): it locks again as soon as a purchase takes the balance below it.
 static const int PRICE[PLAYER_TYPE_COUNT] = { MELEE_PRICE, RANGED_PRICE, DEFENSE_PRICE };
 static const int UNLOCK_AT[PLAYER_TYPE_COUNT] = { MELEE_UNLOCK_AT, RANGED_UNLOCK_AT, DEFENSE_UNLOCK_AT };
-static const int FIELD_LIMIT[PLAYER_TYPE_COUNT] = { MELEE_FIELD_LIMIT, RANGED_FIELD_LIMIT, DEFENSE_FIELD_LIMIT };
-static const char* PLAYER_NAME[PLAYER_TYPE_COUNT] = { "ANAB MAN", "BERAM", "TAYSEER" };
 static int coins = STARTING_COINS;
 static bool firstMeleePlaced = false;   // PDF: only Melee at the start; Beram and Tayseer wait for the first Anab Man
 static int selectedCard = -1;
 
 // Short message in the middle of the screen (placement refused, card unlocked)
-static std::string message;                      // English text (logs, tests)
+static const char* messageId = "";               // label id of the message's main text, e.g. "msg_locked"
 static TextLine messageLine(TC_L);                // what is drawn: text labels + numbers
 static float messageTimer = 0;
 static float messageR, messageG, messageB;
@@ -127,8 +125,8 @@ static void addHitEffect(float x, float y, float r, float g, float b) {
     effects.push_back(e);
 }
 
-static void showMessage(const std::string& text, const TextLine& line, float r, float g, float b) {
-    message = text;
+static void showMessage(const char* id, const TextLine& line, float r, float g, float b) {
+    messageId = id;
     messageLine = line;
     messageTimer = MESSAGE_TIME;
     messageR = r; messageG = g; messageB = b;
@@ -139,23 +137,16 @@ static void showMessage(const std::string& text, const TextLine& line, float r, 
 static void addCoins(int amount) {
     int before = coins;
     coins += amount;
-    for (int t = 0; t < PLAYER_TYPE_COUNT; t++)
+    for (int t = PLAYER_RANGED; t < PLAYER_TYPE_COUNT; t++)   // Anab Man is unlocked from the start: no message for him
         if (before < UNLOCK_AT[t] && coins >= UNLOCK_AT[t] && isUnlocked((PlayerType)t)) {
-            static const char* UNLOCKED_ID[PLAYER_TYPE_COUNT] = { "msg_unlocked_melee", "msg_unlocked_ranged", "msg_unlocked_defense" };
-            showMessage(std::string(PLAYER_NAME[t]) + " UNLOCKED!", TextLine(TC_L).label(UNLOCKED_ID[t]), 0.4f, 1.0f, 0.5f);
+            static const char* UNLOCKED_ID[PLAYER_TYPE_COUNT] = { nullptr, "msg_unlocked_ranged", "msg_unlocked_defense" };
+            showMessage(UNLOCKED_ID[t], TextLine(TC_L).label(UNLOCKED_ID[t]), 0.4f, 1.0f, 0.5f);
         }
 }
 
 static void collectAllCoins() {   // end of a wave: nothing the player missed is lost
     for (const CoinPickup& c : coinPickups) addCoins(c.value);
     coinPickups.clear();
-}
-
-static int countInLane(PlayerType type, int lane) {
-    int count = 0;
-    for (const Player& p : players)
-        if (p.type == type && p.lane == lane) count++;
-    return count;
 }
 
 static void hurtPlayer(Player& p, int damage) {
@@ -263,39 +254,34 @@ void resetGame() {
     spawnTimer = 2.0f;
 }
 
-// The checks, in order. Nothing is changed here.
+// The checks, in order. Nothing is changed here. There is no limit on how many of a type can be on the field.
 static PlaceResult checkPlacement(PlayerType type, int lane) {
     if (gameWon || gameLost) return PLACE_GAME_OVER;
     if (!isUnlocked(type)) return PLACE_LOCKED;
     if (coins < PRICE[type]) return PLACE_NO_COINS;
-    if (countOnField(type) >= FIELD_LIMIT[type]) return PLACE_LIMIT;
     if (lane < 0 || lane >= LANE_COUNT) return PLACE_BAD_LANE;
-    if (type == PLAYER_DEFENSE && countInLane(type, lane) >= DEFENSE_PER_LANE_LIMIT) return PLACE_LANE_TAKEN;
     return PLACE_OK;
 }
 
+// PLACE_GAME_OVER and PLACE_BAD_LANE are still refused, but without a message: the screens never send them
+// (no placing on the win/lose screen, and a lane click is always lane 0..3).
 static void showRefusal(PlayerType type, PlaceResult result) {
-    std::string text;
+    const char* id;
     TextLine line(TC_L);
-    std::string countText = std::to_string(countOnField(type)) + "/" + std::to_string(FIELD_LIMIT[type]);
-    if (result == PLACE_GAME_OVER) { text = "GAME OVER - PRESS R TO RESTART"; line.label("msg_gameover"); }
-    else if (result == PLACE_LOCKED && isWaitingForFirstMelee()) { text = "LOCKED - PLACE AN ANAB MAN FIRST"; line.label("msg_meleefirst"); }
-    else if (result == PLACE_LOCKED) { text = "LOCKED - UNLOCKS AT " + std::to_string(UNLOCK_AT[type]) + " COINS"; line.label("msg_locked").number(UNLOCK_AT[type]).label("msg_coins"); }
-    else if (result == PLACE_NO_COINS) { text = "NOT ENOUGH COINS (NEED " + std::to_string(PRICE[type]) + ")"; line.label("msg_nocoins").number(PRICE[type]); }
-    else if (result == PLACE_LIMIT) { text = "LIMIT REACHED (" + countText + ")"; line.label("msg_limit").number(countText); }
-    else if (result == PLACE_BAD_LANE) { text = "INVALID LANE"; line.label("msg_badlane"); }
-    else if (result == PLACE_LANE_TAKEN) { text = "ONLY ONE TAYSEER PER LANE"; line.label("msg_lanetaken"); }
-    showMessage(text, line, 1.0f, 0.45f, 0.4f);
+    if (result == PLACE_LOCKED && isWaitingForFirstMelee()) { id = "msg_meleefirst"; line.label(id); }
+    else if (result == PLACE_LOCKED) { id = "msg_locked"; line.label(id).number(UNLOCK_AT[type]).label("msg_coins"); }
+    else if (result == PLACE_NO_COINS) { id = "msg_nocoins"; line.label(id).number(PRICE[type]); }
+    else return;
+    showMessage(id, line, 1.0f, 0.45f, 0.4f);
 }
 
 void clickCard(PlayerType type) {
     if (gameWon || gameLost) return;
     if (selectedCard == type) { selectedCard = -1; return; }   // second click on the same card cancels
-    // A locked, unaffordable or full card cannot be selected. There is no waiting time between placements.
+    // A locked or unaffordable card cannot be selected. There is no waiting time between placements.
     PlaceResult problem = PLACE_OK;
     if (!isUnlocked(type)) problem = PLACE_LOCKED;
     else if (coins < PRICE[type]) problem = PLACE_NO_COINS;
-    else if (countOnField(type) >= FIELD_LIMIT[type]) problem = PLACE_LIMIT;
     if (problem != PLACE_OK) { showRefusal(type, problem); return; }
     selectedCard = type;
 }
@@ -303,25 +289,46 @@ void clickCard(PlayerType type) {
 int getSelectedCard() { return selectedCard; }
 
 // Tayseer stands where the lane was clicked: kept inside the lane (not over the lab, not in the enemies' entry
-// zone at the right edge) and never on top of an enemy - on a click over one, he stands just in front of it.
+// zone at the right edge) and never on top of an enemy or another Tayseer - on a click over one, he stands just
+// in front of it (lab side). If the lane's left end is taken by a Tayseer, he stands just behind the Tayseers
+// instead. Returns -1 when there is no free spot in the lane.
 static float defenseSpot(int lane, float clickX) {
+    const float TAYSEER_SPACING = 2 * playerHalfWidth(PLAYER_DEFENSE) + 6;   // two bodies + a visible gap
     float half = playerHalfWidth(PLAYER_DEFENSE);
-    float leftmost = BASE_WIDTH + half + 4;
-    float x = std::max(leftmost, std::min(clickX, SCREEN_WIDTH - ENEMY_ENTRY_ZONE - half));
-    bool moved = true;
-    for (size_t tries = 0; moved && tries <= enemies.size(); tries++) {   // stepping in front of one enemy can reach the next
-        moved = false;
-        for (const Enemy& e : enemies) {
-            if (e.lane != lane || e.health <= 0) continue;
-            float eHalf = enemyHalfWidth(e.type);
-            if (x + half > e.x - eHalf && x - half < e.x + eHalf) { x = e.x - eHalf - half; moved = true; }
+    float leftmost = BASE_WIDTH + half + 4, rightmost = SCREEN_WIDTH - ENEMY_ENTRY_ZONE - half;
+    float start = std::max(leftmost, std::min(clickX, rightmost));
+    auto onTayseer = [&](float x) {
+        for (const Player& p : players)
+            if (p.type == PLAYER_DEFENSE && p.lane == lane && fabs(x - p.x) < TAYSEER_SPACING) return true;
+        return false;
+    };
+    for (int dir = -1; dir <= 1; dir += 2) {                   // first towards the lab, then away from it
+        float x = start;
+        bool moved = true;
+        for (size_t tries = 0; moved && tries <= enemies.size() + players.size(); tries++) {   // stepping past one body can reach the next
+            moved = false;
+            for (const Enemy& e : enemies) {
+                if (e.lane != lane || e.health <= 0) continue;
+                float eHalf = enemyHalfWidth(e.type);
+                if (x + half > e.x - eHalf && x - half < e.x + eHalf) { x = e.x + dir * (eHalf + half); moved = true; }
+            }
+            for (const Player& p : players)
+                if (p.type == PLAYER_DEFENSE && p.lane == lane && fabs(x - p.x) < TAYSEER_SPACING) { x = p.x + dir * TAYSEER_SPACING; moved = true; }
+        }
+        if (dir < 0) {
+            x = std::max(x, leftmost);                         // as before: an enemy at the lab end is not avoided
+            if (!onTayseer(x)) return x;
+        } else if (!moved && x <= rightmost) {
+            return x;
         }
     }
-    return std::max(x, leftmost);
+    return -1;
 }
 
 PlaceResult tryPlacePlayer(PlayerType type, int lane, float clickX) {
     PlaceResult result = checkPlacement(type, lane);
+    float spot = (result == PLACE_OK && type == PLAYER_DEFENSE) ? defenseSpot(lane, clickX) : 0;   // clickX -1 = left end
+    if (result == PLACE_OK && spot < 0) result = PLACE_NO_ROOM;
     if (result != PLACE_OK) {
         showRefusal(type, result);
         return result;                                 // nothing created, no coins taken
@@ -330,7 +337,7 @@ PlaceResult tryPlacePlayer(PlayerType type, int lane, float clickX) {
     p.type = type;
     p.lane = lane;
     p.x = BASE_WIDTH + playerHalfWidth(type) + 4;     // leftmost position of the lane (PDF)
-    if (type == PLAYER_DEFENSE && clickX >= 0) p.x = defenseSpot(lane, clickX);
+    if (type == PLAYER_DEFENSE) p.x = spot;
     p.maxHealth = (type == PLAYER_MELEE) ? MELEE_HEALTH : (type == PLAYER_RANGED ? RANGED_HEALTH : DEFENSE_HEALTH);
     p.health = p.maxHealth;
     p.attackTimer = 0.3f;                             // starts attacking right after placement
@@ -381,7 +388,6 @@ static void collectCoinsTouchedByPlayers() {
 int getCoins() { return coins; }
 int getPrice(PlayerType type) { return PRICE[type]; }
 int getUnlockThreshold(PlayerType type) { return UNLOCK_AT[type]; }
-int getFieldLimit(PlayerType type) { return FIELD_LIMIT[type]; }
 // PDF: only the Melee card is unlocked at first. Beram and Tayseer unlock once the first Anab Man is placed, and
 // then exactly while the balance is at least their threshold (they relock below it).
 bool isUnlocked(PlayerType type) {

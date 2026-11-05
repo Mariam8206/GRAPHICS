@@ -6,6 +6,20 @@ Verification kinds: **logic test** = automated test program run against the real
 **off-screen render** = scene drawn by the real drawing code into a hidden window and saved as an image;
 **on-screen** = seen while playing the real game.
 
+**How to read this file:** the section "Current rules" below describes the game as it is now. The status notes in the
+requirement tables and every section from "Team decisions" down are **historical records**: they keep the evidence as
+it was at that milestone, so they may quote values and rules that have since changed (old prices, permanent unlocks,
+cooldowns, field limits). When they disagree with "Current rules", "Current rules" wins.
+
+## Current rules (as of 2026-11-05; all values in config.h)
+- **Coins:** start 30. Every defeated enemy drops one coin pickup worth 10, collected by mouse hover or when a player character touches it; pickups left at the end of a wave are collected automatically.
+- **Prices:** Anab Man 10, Beram 20, Tayseer 30, paid only when the character is actually placed.
+- **Unlocking (PDF p. 13):** Anab Man is unlocked from the start. Beram and Tayseer wait until the first Anab Man of the game is placed (once per game); after that a card is unlocked exactly while the balance is at least its threshold (Beram 20, Tayseer 30) and relocks below it. "Beram unlocked!" / "Tayseer unlocked!" appears when the balance rises to the threshold.
+- **No placement limits:** the PDF sets no maximum, so any character can be placed as often as the player can afford, several in the same lane. Cards show the plain count ("On field 5"). There is no waiting time between placements.
+- **Placement:** card first, then lane (differs from the PDF's lane-first wording). Anab Man and Beram appear at the left end of the lane and walk right; walkers of the same type can overlap while walking (accepted 2026-11-05, the PDF asks for no spacing). Tayseer stands where the lane was clicked, never on top of an enemy or another Tayseer: he steps just in front of it, or behind the Tayseers at the left end; with no free spot the placement is refused.
+- **Refusals:** checks in order: game not over, unlocked, enough coins, valid lane, and for Tayseer a free spot. A refusal creates nothing and takes no coins. Locked and not-enough-coins show a message for 1.5 s; game over, invalid lane and no free spot show none (the screens never send the first two).
+- **Waves:** 3 waves (easy / medium / hard: 3-0-0, 3-2-0, 4-3-3), one spawn every 6.5 s, a 5 s break between waves that clears the field; balance is kept.
+
 ## General
 | ID | Requirement | Status |
 |---|---|---|
@@ -40,7 +54,7 @@ Verification kinds: **logic test** = automated test program run against the real
 | R-PL-1 | Three types: Melee, Ranged, Defense; distinct models (not recolors) | Implemented (CP3) – Anab Man / Beram / Tayseer models; team visual check needed |
 | R-PL-2 | Players are purchased with coins/collectibles | Done (CP4, logic test) – each successful placement costs its price exactly once; **M5B visible window:** Beram (40) and Tayseer (60) bought through their cards with normal clicks |
 | R-PL-3 | At start only Melee is unlocked; starting coins buy at least 3 Melee | Done (CP4, logic test) – start 30 coins = 3 x Melee (10); Beram and Tayseer locked |
-| R-PL-4 | Coins come from defeating enemies; other types unlock progressively | Done (CP4, logic test) – drops 10/20/30; Beram unlocks at 100, Tayseer at 150 (permanent, see team decisions) |
+| R-PL-4 | Coins come from defeating enemies; other types unlock progressively | Done – **now:** every enemy drops 10; Beram unlocks at 20, Tayseer at 30, relocking below (see Current rules). Earlier (CP4, logic test): drops 10/20/30, Beram 100, Tayseer 150, permanent |
 | R-PL-5 | Hovering highlights the entire lane under the cursor | Verified (CP2 screenshots show hovered lane tinted) |
 | R-PL-6 | Left click toggles lane selection; multiple lanes can be selected | Implemented (M5), needs on-screen check; **M5A visible window (normal play):** all 4 lanes selected by left clicks; selection cleared at wave end |
 | R-PL-7 | Select a card, choose a lane, player appears at the leftmost position | Implemented (CP4) – card first, then lane (**differs from the PDF's lane-first wording**, team decision); logic test + off-screen render; on-screen check by team; **M5A visible window (normal play):** card click, then lane click placed Anab Man (19 placements); refused click on locked Beram showed "LOCKED - UNLOCKS AT 100 COINS" |
@@ -84,7 +98,7 @@ Verification kinds: **logic test** = automated test program run against the real
 | R-UI-2 | Player cards show whether each type is unlocked | Done (CP4, off-screen render); **M5B visible window:** Arabic cards; locked cards show "يُفتح عند ١٠٠ / ١٥٠" |
 | R-UI-3 | Locked cards are grayscale and ignore hover/selection | Implemented (CP4) – grayscale + padlock + 'UNLOCKS AT n' (render); cannot be selected (logic test); no hover effect; **M5B visible window:** Beram/Tayseer gray with padlock while locked; clicking locked Beram refused with "مقفول - يُفتح عند ١٠٠ عملة", no selection |
 | R-UI-4 | Unlocked cards are in color, react to hover, can be selected | Implemented (CP4) – hover/selection seen in off-screen render; on-screen check by team; **M5B visible window:** selected card: gold outline + "اختر حارة"; cooldown overlay + "انتظر ١٫٥ ث"; unaffordable: dimmed + red price + "تحتاج ٤٠" |
-| R-UI-5 | Cards unlock automatically at the cost and relock automatically below it | Team decision (CP4): unlock is **permanent**, no relock. **Differs from the PDF wording**, pending TA (Q1/Q2); **M5A visible window (normal play):** "BERAM UNLOCKED!" exactly when the counter reached 100; **M5B visible window:** Beram placed at 100 -> 60 and 60 -> 20: card stays unlocked (shows "تحتاج ٤٠", not "يُفتح عند"); Tayseer 150 -> 90 stays unlocked (coins granted with a test-only key, see Milestone 5B) |
+| R-UI-5 | Cards unlock automatically at the cost and relock automatically below it | Done – **now (since 2026-11-04):** cards relock below their threshold, as the PDF says (see Current rules). Earlier team decision (CP4): unlock was **permanent**, no relock, pending TA (Q1/Q2); **M5A visible window (normal play):** "BERAM UNLOCKED!" exactly when the counter reached 100; **M5B visible window:** Beram placed at 100 -> 60 and 60 -> 20: card stays unlocked (shows "تحتاج ٤٠", not "يُفتح عند"); Tayseer 150 -> 90 stays unlocked (coins granted with a test-only key, see Milestone 5B) |
 ## Menus (Section 4.3)
 | ID | Requirement | Status |
 |---|---|---|
@@ -114,6 +128,10 @@ Verification kinds: **logic test** = automated test program run against the real
 - **Q4:** How many coins should each enemy type drop? The PDF does not say.
 - **Q6:** The zip is "source files only". Do the Arabic UI PNGs in `assets/ui/` count (they are generated by `assets/ui/make_labels.ps1` from `labels.tsv`)? If they are left out the game falls back to English text.
 - **Q5:** "Collected when a player collides with them": does "player" mean the person (mouse) or a player character? Resolved by doing both (team decision after CP4).
+
+---
+**Historical records from here down.** Each section keeps what was decided or verified at that time; for the rules
+that apply now, see "Current rules" at the top.
 
 ## Team decisions (approved before CP2)
 - Theme: "أزمة آخر قارورة عناب", inspired by El-Ragol El-Enab. Defend Dr. Beram's lab and the last El-Anab formula bottle.

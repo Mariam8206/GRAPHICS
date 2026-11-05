@@ -5,8 +5,11 @@ enum PlayerType { PLAYER_MELEE, PLAYER_RANGED, PLAYER_DEFENSE };
 const int PLAYER_TYPE_COUNT = 3;
 
 // Result of a placement attempt. Only PLACE_OK creates a character and takes coins.
+// PLACE_GAME_OVER and PLACE_BAD_LANE are safety checks only: refused like the others, but no message is shown.
+// PLACE_NO_ROOM: a Tayseer finds no free spot in the lane (Tayseers and enemies fill it); also no message.
+// There is no limit on how many characters of a type can be placed: as many as the player can afford.
 enum PlaceResult { PLACE_OK, PLACE_GAME_OVER, PLACE_LOCKED, PLACE_NO_COINS,
-                   PLACE_LIMIT, PLACE_BAD_LANE, PLACE_LANE_TAKEN };
+                   PLACE_BAD_LANE, PLACE_NO_ROOM };
 
 void resetGame();                  // clears everything (coins and unlocks too) and starts wave 1
 void updateGame(float deltaTime);  // moves and fights; does nothing once the game is won or lost (freeze)
@@ -27,7 +30,6 @@ void collectCoinsAt(float x, float y);   // mouse hover: collects every coin pic
 int getCoins();
 int getPrice(PlayerType type);
 int getUnlockThreshold(PlayerType type);
-int getFieldLimit(PlayerType type);
 int countOnField(PlayerType type);
 bool isUnlocked(PlayerType type);
 bool isWaitingForFirstMelee();   // true until the first Anab Man of the game is placed (Beram and Tayseer stay locked)

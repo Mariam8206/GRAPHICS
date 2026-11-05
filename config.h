@@ -34,11 +34,6 @@ const int DEFENSE_PRICE = 30;
 const int MELEE_UNLOCK_AT = 0;
 const int RANGED_UNLOCK_AT = RANGED_PRICE;     // 20
 const int DEFENSE_UNLOCK_AT = DEFENSE_PRICE;   // 30
-// Field limits (how many of each character can be on the field at the same time)
-const int MELEE_FIELD_LIMIT = 7;
-const int RANGED_FIELD_LIMIT = 4;
-const int DEFENSE_FIELD_LIMIT = 4;
-const int DEFENSE_PER_LANE_LIMIT = 1;    // Defense never moves, so a second one in a lane would stand on the first
 // Coins dropped by a defeated enemy (team decision: every enemy is worth 10)
 const int EASY_REWARD = 10;
 const int MEDIUM_REWARD = 10;

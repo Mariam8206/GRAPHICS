@@ -10,20 +10,14 @@ dmg	s	DMG
 blocks	s	Blocks
 field	s	On field
 st_unlocks	s	Unlocks at
-st_limit	s	Limit
 st_need	s	Need
 st_click	s	Pick a lane
 st_ready	s	Ready
 st_meleefirst	s	Place Anab Man first
-msg_gameover	l	Game over
 msg_locked	l	Locked - unlocks at
 msg_meleefirst	l	Place an Anab Man first
 msg_coins	l	coins
 msg_nocoins	l	Not enough coins - you need
-msg_limit	l	Maximum reached
-msg_badlane	l	Invalid lane
-msg_lanetaken	l	Only one Tayseer per lane
-msg_unlocked_melee	l	Anab Man unlocked!
 msg_unlocked_ranged	l	Beram unlocked!
 msg_unlocked_defense	l	Tayseer unlocked!
 ban_wave	xxl	WAVE

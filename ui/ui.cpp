@@ -34,10 +34,9 @@ static void drawCard(int i, bool hovered, float time) {
     float x = CARD_X[i], y = CARD_Y, w = CARD_WIDTH, h = CARD_HEIGHT;
     bool locked = !isUnlocked(type);
     bool affordable = getCoins() >= getPrice(type);
-    int count = countOnField(type), limit = getFieldLimit(type);
-    bool full = count >= limit;
+    int count = countOnField(type);
     bool selected = (getSelectedCard() == i);
-    bool available = !locked && affordable && !full;
+    bool available = !locked && affordable;
     float textDim = available ? 1.0f : 0.6f;
 
     if (locked) setGrayscale(1);                                             // the whole card loses its color
@@ -81,16 +80,13 @@ static void drawCard(int i, bool hovered, float time) {
     if (affordable || locked) price.drawRight(right - 17, y + 37, 1.0f * textDim, 0.88f * textDim, 0.35f * textDim);
     else                      price.drawRight(right - 17, y + 37, 1.0f, 0.25f, 0.25f);   // red: not enough coins
 
-    std::string countText = std::to_string(count) + "/" + std::to_string(limit);
-    TextLine(TC_S).label("field").number(countText).drawRight(right, y + 21,
-        full ? 1.0f : 0.85f * textDim, full ? 0.55f : 0.85f * textDim, full ? 0.2f : 0.85f * textDim);
+    TextLine(TC_S).label("field").number(count).drawRight(right, y + 21, 0.85f * textDim, 0.85f * textDim, 0.85f * textDim);
 
     // Status strip at the bottom: the one most important reason this card can or cannot be used
     TextLine status(TC_S);
     float sr, sg, sb;
     if (locked && isWaitingForFirstMelee()) { status.label("st_meleefirst"); sr = 0.8f; sg = 0.8f; sb = 0.8f; }
     else if (locked)          { status.label("st_unlocks").number(getUnlockThreshold(type)); sr = 0.8f; sg = 0.8f; sb = 0.8f; }
-    else if (full)            { status.label("st_limit").number(countText); sr = 1.0f; sg = 0.55f; sb = 0.2f; }
     else if (!affordable)     { status.label("st_need").number(getPrice(type)); sr = 1.0f; sg = 0.35f; sb = 0.35f; }
     else if (selected)        { status.label("st_click"); sr = 1.0f; sg = 0.85f; sb = 0.3f; }
     else                      { status.label("st_ready"); sr = 0.45f; sg = 1.0f; sb = 0.5f; }
