@@ -15,9 +15,8 @@ void resetGame();                  // clears everything (coins back to start, An
 void updateGame(float deltaTime);  // moves and fights; does nothing once the game is won or lost (freeze)
 void drawGame(float time);         // characters, coins, projectiles, health bars, messages, banners
 
-// --- Placement: card first, then lane ---
-void clickCard(PlayerType type);                      // selects the card, or cancels if it was already selected
-int getSelectedCard();                                // -1 = no card selected
+// --- Placement: lane first, then card (the lane is chosen in lanes.h: clickLane) ---
+void clickCard(PlayerType type);                      // places this character in the placement lane, if allowed
 // Checks everything; pays only if the character is placed. Anab Man and Beram appear at the left end of the lane;
 // Tayseer (Defense) stands where the lane was clicked (clickX, in pixels; -1 = left end).
 PlaceResult tryPlacePlayer(PlayerType type, int lane, float clickX = -1.0f);

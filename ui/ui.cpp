@@ -96,31 +96,25 @@ static void drawCardText(PlayerType type, float x, float y, bool locked, bool af
 }
 
 // Status strip at the bottom: the one most important reason this card can or cannot be used
-static void drawCardStatus(PlayerType type, float x, float y, bool locked, bool affordable, bool selected) {
+static void drawCardStatus(PlayerType type, float x, float y, bool locked, bool affordable) {
     TextLine status(TC_S);
     float r, g, b;
     if (locked && isWaitingForFirstMelee()) { status.label("st_meleefirst"); r = 0.8f; g = 0.8f; b = 0.8f; }
     else if (locked)      { status.label("st_unlocks").number(getUnlockThreshold(type)); r = 0.8f; g = 0.8f; b = 0.8f; }
     else if (!affordable) { status.label("st_need").number(getPrice(type)); r = 1.0f; g = 0.35f; b = 0.35f; }
-    else if (selected)    { status.label("st_click"); r = 1.0f; g = 0.85f; b = 0.3f; }
     else                  { status.label("st_ready"); r = 0.45f; g = 1.0f; b = 0.5f; }
     drawRectangle(x + 4, y + STATUS_ROW, CARD_WIDTH - 8, STATUS_HEIGHT, 0.12f, 0.04f, 0.08f);   // 4 px in on each side
     status.drawCentered(x + CARD_WIDTH / 2, y + STATUS_ROW, r, g, b, 1, false);
 }
 
-// Border: hovered (usable cards only) = brighter; selected = thick gold plus a pulsing outer glow
-static void drawCardBorder(float x, float y, bool locked, bool hovered, bool available, bool selected, float time) {
+// Border: hovered (usable cards only) = brighter
+static void drawCardBorder(float x, float y, bool locked, bool hovered, bool available) {
     float w = CARD_WIDTH, h = CARD_HEIGHT;
-    if (hovered && available && !selected) {
+    if (hovered && available) {
         drawRectangle(x, y, w, h, 1.0f, 1.0f, 1.0f, 0.12f);
         drawRectangleOutline(x, y, w, h, 2, 1.0f, 0.95f, 0.75f);
     } else {
         drawRectangleOutline(x, y, w, h, 2, 0.95f, 0.75f, 0.25f, locked ? 0.5f : 1.0f);
-    }
-    if (selected) {
-        float pulse = 0.5f + 0.5f * sin(time * 6.0f);
-        drawRectangleOutline(x, y, w, h, 4, 1.0f, 0.82f, 0.15f);
-        drawRectangleOutline(x - 5, y - 5, w + 10, h + 10, 3, 1.0f, 0.85f, 0.2f, 0.35f + 0.4f * pulse);
     }
 }
 
@@ -128,16 +122,15 @@ static void drawCard(PlayerType type, bool hovered, float time) {
     float x = CARD_X[type], y = CARD_Y;
     bool locked = !isUnlocked(type);
     bool affordable = getCoins() >= getPrice(type);
-    bool available = !locked && affordable;          // can be selected right now
-    bool selected = (getSelectedCard() == type);
+    bool available = !locked && affordable;          // can be bought right now
 
     if (locked) setGrayscale(1);                     // the whole card loses its color
     drawRectangle(x - 2, y - 2, CARD_WIDTH + 4, CARD_HEIGHT + 4, 0.08f, 0.02f, 0.05f);   // dark frame
     drawRectangle(x, y, CARD_WIDTH, CARD_HEIGHT, 0.32f, 0.12f, 0.20f);                   // background
     drawCardPortrait(type, x, y, locked, available, time);
     drawCardText(type, x, y, locked, affordable, available);
-    drawCardStatus(type, x, y, locked, affordable, selected);
-    drawCardBorder(x, y, locked, hovered, available, selected, time);
+    drawCardStatus(type, x, y, locked, affordable);
+    drawCardBorder(x, y, locked, hovered, available);
     setGrayscale(0);
 }
 

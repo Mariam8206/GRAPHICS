@@ -67,14 +67,10 @@ static void updateScreen(App& app, const FrameInput& input, float deltaTime, int
         hoveredLane = getLaneAt(input.mouseX, input.mouseY);
         hoveredCard = getCardAt(input.mouseX, input.mouseY);
         if (input.clicked) {
-            if (hoveredCard != -1) {
-                clickCard((PlayerType)hoveredCard);                         // select / cancel a card
-            } else if (hoveredLane != -1) {
-                if (getSelectedCard() != -1)   // card first, then lane (Tayseer: at the click)
-                    tryPlacePlayer((PlayerType)getSelectedCard(), hoveredLane, input.mouseX);
-                else
-                    laneSelected[hoveredLane] = !laneSelected[hoveredLane];   // no card: toggle for jump/duck
-            }
+            // Lane first, then card: a lane click selects / deselects the lane (also for jump/duck);
+            // a card click places that character in the lane selected last (Tayseer: where it was clicked)
+            if (hoveredCard != -1) clickCard((PlayerType)hoveredCard);
+            else if (hoveredLane != -1) clickLane(hoveredLane, input.mouseX);
         }
         // mouse hover collects coins (player characters touching them do too, in game.cpp)
         collectCoinsAt(input.mouseX, input.mouseY);

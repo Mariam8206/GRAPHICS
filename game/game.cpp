@@ -97,7 +97,6 @@ static const float ENEMY_SPEED[ENEMY_TYPE_COUNT] = { EASY_SPEED, MEDIUM_SPEED, H
 static const int ENEMY_REWARD[ENEMY_TYPE_COUNT] = { EASY_REWARD, MEDIUM_REWARD, HARD_REWARD };  // coins dropped
 static int coins = STARTING_COINS;
 static bool firstMeleePlaced = false;   // PDF: only Melee at the start; Beram and Tayseer wait for the first Anab Man
-static int selectedCard = -1;
 
 // Short message in the middle of the screen (placement refused, card unlocked)
 static const char* messageId = "";               // label id of the message's main text, e.g. "msg_locked"
@@ -226,8 +225,7 @@ static void clearFieldForNextWave() {
         addHitEffect(p.x, laneGround(p.lane) + 35, 0.95f, 0.85f, 0.4f);   // they go back to the lab
     players.clear();
     projectiles.clear();
-    for (int lane = 0; lane < LANE_COUNT; lane++) laneSelected[lane] = false;
-    selectedCard = -1;
+    clearLaneSelection();
 }
 
 // Returns false (nothing spawned) when every lane is crowded; the caller tries again next frame.
@@ -285,9 +283,8 @@ void resetGame() {
     waveBreakTimer = -1;
     coins = STARTING_COINS;                       // 30: only Anab Man (threshold 0) is unlocked at the start
     firstMeleePlaced = false;                     // a new game starts with Anab Man only
-    selectedCard = -1;
     messageTimer = 0;
-    for (int lane = 0; lane < LANE_COUNT; lane++) laneSelected[lane] = false;
+    clearLaneSelection();                         // no lane selected, no placement lane from the last game
     startWave(1);
     spawnTimer = 2.0f;
 }
@@ -321,16 +318,20 @@ static void showRefusal(PlayerType type, PlaceResult result) {
     showMessage(id, line, REFUSAL_COLOR);
 }
 
+// Lane first, then card: a card click places that character in the placement lane (lanes.h). A locked or
+// unaffordable card places nothing and shows the same messages as before. With no lane chosen yet, nothing is
+// placed and "Select a lane first" appears. After a successful placement the player must choose a lane again;
+// after a failed one (no free spot) the lane stays chosen. There is no waiting time between placements.
 void clickCard(PlayerType type) {
     if (gameWon || gameLost) return;
-    if (selectedCard == type) { selectedCard = -1; return; }   // second click on the same card cancels
-    // A locked or unaffordable card cannot be selected. There is no waiting time between placements.
     PlaceResult problem = checkPurchase(type);
     if (problem != PLACE_OK) { showRefusal(type, problem); return; }
-    selectedCard = type;
+    if (placementLane < 0) {
+        showMessage("msg_lanefirst", TextLine(TC_L).label("msg_lanefirst"), REFUSAL_COLOR);
+        return;
+    }
+    if (tryPlacePlayer(type, placementLane, placementX) == PLACE_OK) placementLane = -1;
 }
-
-int getSelectedCard() { return selectedCard; }
 
 static const float TAYSEER_SPACING = 2 * playerHalfWidth(PLAYER_DEFENSE) + 6;   // two bodies + a visible gap
 
@@ -408,7 +409,6 @@ PlaceResult tryPlacePlayer(PlayerType type, int lane, float clickX) {
     coins -= PRICE[type];                              // paid only now that the character exists
     if (type == PLAYER_MELEE) firstMeleePlaced = true; // from now on Beram and Tayseer follow the coin rule
     messageTimer = 0;                                  // an earlier refusal message is no longer true
-    selectedCard = -1;                                 // back to lane selection for jump/duck
     return PLACE_OK;
 }
 

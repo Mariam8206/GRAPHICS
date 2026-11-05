@@ -4,7 +4,25 @@
 #include <GLFW/glfw3.h>
 
 bool laneSelected[LANE_COUNT] = { false };
+int placementLane = -1;
+float placementX = -1;
 static bool leftClickHappened = false;   // set by the callback, consumed by takeLeftClick()
+
+void clickLane(int lane, float x) {
+    if (lane == placementLane) {         // clicking the placement lane again deselects it
+        laneSelected[lane] = false;
+        placementLane = -1;
+    } else {                             // any other lane: one click selects it (if it was not yet) and makes it
+        laneSelected[lane] = true;       // the placement lane; the other selected lanes stay selected for jump/duck
+        placementLane = lane;
+        placementX = x;
+    }
+}
+
+void clearLaneSelection() {
+    for (int lane = 0; lane < LANE_COUNT; lane++) laneSelected[lane] = false;
+    placementLane = -1;
+}
 
 void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
@@ -31,6 +49,8 @@ void drawLaneHighlights(int hoveredLane) {
             drawRectangle(BASE_WIDTH, laneY, laneWidth, LANE_HEIGHT, 1.0f, 0.85f, 0.2f, 0.25f);
             drawRectangleOutline(BASE_WIDTH, laneY, laneWidth, LANE_HEIGHT, 4, 1.0f, 0.75f, 0.1f, 0.9f);
         }
+        if (lane == placementLane)       // the next character goes here: white border inside the gold one
+            drawRectangleOutline(BASE_WIDTH + 4, laneY + 4, laneWidth - 8, LANE_HEIGHT - 8, 3, 1.0f, 1.0f, 1.0f, 0.9f);
         if (lane == hoveredLane)
             drawRectangle(BASE_WIDTH, laneY, laneWidth, LANE_HEIGHT, 1.0f, 1.0f, 1.0f, 0.2f);
     }

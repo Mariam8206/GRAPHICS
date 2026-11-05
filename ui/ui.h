@@ -1,6 +1,6 @@
 #pragma once
 // Top UI bar (PDF 4.2: collected coins shown at the top; player cards).
-// Coin counter, wave label and the three character cards (card first, then lane).
+// Coin counter, wave label and the three character cards (lane first, then card).
 
 void drawTopBar(int coins, int wave, int hoveredCard, float time);
 
